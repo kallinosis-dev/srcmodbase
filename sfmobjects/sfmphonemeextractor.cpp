@@ -19,7 +19,6 @@
 #include "tier2/p4helpers.h"
 #include "tier2/soundutils.h"
 #include "tier1/utldict.h"
-#include "sfmobjects/sfmanimationsetutils.h"
 
 #include <windows.h>  // WAVEFORMATEX, WAVEFORMAT and ADPCM WAVEFORMAT!!!
 #include <mmreg.h>
@@ -77,8 +76,8 @@ private:
 	void StampControlValueLogs( CDmePreset *preset, DmeTime_t tHeadPosition, float flIntensity, CUtlDict< LogPreview_t *, int > &controlLookup );
 	void WriteCurrentValuesIntoLogLayers( DmeTime_t tHeadPosition, const CUtlDict< LogPreview_t *, int > &controlLookup );
 	void WriteDefaultValuesIntoLogLayers( DmeTime_t tHeadPosition, const CUtlDict< LogPreview_t *, int > &controlLookup );
-	void BuildPhonemeLogList(CUtlVector<LogPreview_t*>& list, CUtlVector< CDmeLog * > &logs);
-	CDmeChannelsClip* FindFacialChannelsClip(const CUtlVector<LogPreview_t*>& list);
+	void BuildPhonemeLogList( CUtlVector< LogPreview_t > &list, CUtlVector< CDmeLog * > &logs );
+	CDmeChannelsClip* FindFacialChannelsClip( const CUtlVector< LogPreview_t > &list );
 	void BuildPhonemeToPresetMapping( const CUtlVector< CBasePhonemeTag * > &stream, CDmeAnimationSet *pSet, CDmePresetGroup * pPresetGroup, CUtlDict< CDmePreset *, unsigned short > &phonemeToPresetDict );
 
 	CUtlVector< Extractor >	m_Extractors;
@@ -500,7 +499,7 @@ void CSFMPhonemeExtractor::Extract( const PE_APITYPE& apiType, ExtractDesc_t& in
 
 			int i;
 			// Now convert byte offsets to times
-			for ( i = 0; i < out.m_Words.Count(); i++ )
+			for ( i = 0; i < out.m_Words.Size(); i++ )
 			{
 				CWordTag *tag = out.m_Words[ i ];
 				Assert( tag );
@@ -510,7 +509,7 @@ void CSFMPhonemeExtractor::Extract( const PE_APITYPE& apiType, ExtractDesc_t& in
 				tag->m_flStartTime = ( float )(tag->m_uiStartByte ) / bytespersecond;
 				tag->m_flEndTime = ( float )(tag->m_uiEndByte ) / bytespersecond;
 
-				for ( int j = 0; j < tag->m_Phonemes.Count(); j++ )
+				for ( int j = 0; j < tag->m_Phonemes.Size(); j++ )
 				{
 					CPhonemeTag *ptag = tag->m_Phonemes[ j ];
 					Assert( ptag );
@@ -539,10 +538,9 @@ void CSFMPhonemeExtractor::Extract( const PE_APITYPE& apiType, ExtractDesc_t& in
 	}
 
 	if ( info.m_bCreateBookmarks )
-		if(auto bookmarks = info.m_pShot->GetActiveBookmarkSet())
-		{
-			bookmarks->GetBookmarks().RemoveAll();
-		}
+	{
+		info.m_pSet->GetBookmarks().RemoveAll();
+	}
 
 	for ( nWorkItem = 0; nWorkItem < info.m_WorkList.Count(); ++nWorkItem )
 	{
@@ -612,14 +610,15 @@ void CSFMPhonemeExtractor::BuildPhonemeToPresetMapping( const CUtlVector< CBaseP
 //-----------------------------------------------------------------------------
 // Finds the channels clip which refers to facial control values 
 //-----------------------------------------------------------------------------
-CDmeChannelsClip* CSFMPhonemeExtractor::FindFacialChannelsClip(const CUtlVector<LogPreview_t*>& list)
+CDmeChannelsClip* CSFMPhonemeExtractor::FindFacialChannelsClip( const CUtlVector< LogPreview_t > &list )
 {
 	CDmeChannelsClip *pChannelsClip = nullptr;
 
-	for ( int i = list.Count() - 1; i >= 0; --i )
+	int i;
+	for ( i = list.Count() - 1; i >= 0; --i )
 	{
-		const LogPreview_t *lp = list[i];
-		CDmeChannelsClip *check = FindAncestorReferencingElement< CDmeChannelsClip >( lp->m_hChannels[ 0 ].Get() );
+		const LogPreview_t &lp = list[i];
+		CDmeChannelsClip *check = FindAncestorReferencingElement< CDmeChannelsClip >( (CDmElement *)lp.m_hChannels[ 0 ].Get() );
 
 		if ( !pChannelsClip && check )
 		{
@@ -646,19 +645,19 @@ CDmeChannelsClip* CSFMPhonemeExtractor::FindFacialChannelsClip(const CUtlVector<
 //-----------------------------------------------------------------------------
 // Builds the list of logs which target facial control values 
 //-----------------------------------------------------------------------------
-void CSFMPhonemeExtractor::BuildPhonemeLogList(CUtlVector<LogPreview_t*>& list, CUtlVector< CDmeLog * > &logs)
+void CSFMPhonemeExtractor::BuildPhonemeLogList( CUtlVector< LogPreview_t > &list, CUtlVector< CDmeLog * > &logs )
 {
 	for ( int i = 0; i < list.Count(); ++i )
 	{
-		LogPreview_t* p = list[ i ];
+		LogPreview_t& p = list[ i ];
 
-		for (CDmeHandle<CDmeChannel> m_hChannel : p->m_hChannels)
+		for ( int channel = 0; channel < LOG_PREVIEW_FLEX_CHANNEL_COUNT; ++channel )
 		{
-			CDmeChannel *ch = m_hChannel;
+			CDmeChannel *ch = p.m_hChannels[ channel ];
 			if ( !ch )
 				continue;
 
-			CDmeLog *log = m_hChannel->GetLog();
+			CDmeLog *log = p.m_hChannels[ channel ]->GetLog();
 			if ( !log )
 				continue;
 
@@ -816,15 +815,15 @@ void CSFMPhonemeExtractor::ClearInterstitialSpaces( CDmeChannelsClip *pChannelsC
 	{
 		CExtractInfo &item = info.m_WorkList[ i ];
 
-		DmeClipStack_t srcStack;
-		DmeClipStack_t dstStack;
+		CUtlVector< CDmeHandle< CDmeClip > > srcStack;
+		CUtlVector< CDmeHandle< CDmeClip > > dstStack;
 
 		// Convert original .wav start to animation set channels clip relative time
 		item.m_pClip->BuildClipStack( &srcStack, info.m_pMovie, info.m_pShot );
 
 		// NOTE: Time bounds measured in sound media time goes from 0 -> flWaveDuration
-		DmeTime_t tSoundMediaStartTime = srcStack.FromChildMediaTime( DMETIME_ZERO, false );
-		DmeTime_t tSoundMediaEndTime   = srcStack.FromChildMediaTime( DmeTime_t( item.m_flDuration ), false );
+		DmeTime_t tSoundMediaStartTime = CDmeClip::FromChildMediaTime( srcStack, DMETIME_ZERO, false );
+		DmeTime_t tSoundMediaEndTime   = CDmeClip::FromChildMediaTime( srcStack, DmeTime_t( item.m_flDuration ), false );
 
 		// NOTE: Start and end time are measured in sound media time
 		DmeTime_t tStartTime = item.m_pClip->GetStartInChildMediaTime();
@@ -834,8 +833,8 @@ void CSFMPhonemeExtractor::ClearInterstitialSpaces( CDmeChannelsClip *pChannelsC
 		pChannelsClip->BuildClipStack( &dstStack, info.m_pMovie, info.m_pShot );
 
 		// Now convert back down to channels clip relative time
-		DmeTime_t tChannelMediaStartTime = dstStack.ToChildMediaTime( tSoundMediaStartTime, false );
-		DmeTime_t tChannelMediaEndTime = dstStack.ToChildMediaTime( tSoundMediaEndTime, false );
+		DmeTime_t tChannelMediaStartTime = CDmeClip::ToChildMediaTime( dstStack, tSoundMediaStartTime, false );
+		DmeTime_t tChannelMediaEndTime = CDmeClip::ToChildMediaTime( dstStack, tSoundMediaEndTime, false );
 
 		// Find a scale + offset which transforms data in media space of the sound [namely, the phonemes]
 		// into the media space of the channels [the logs that drive the facial animation]
@@ -881,7 +880,7 @@ void CSFMPhonemeExtractor::ClearInterstitialSpaces( CDmeChannelsClip *pChannelsC
 			// Now discard all keys > tMinTime and < tMaxTime
 			for ( int j = layer->GetKeyCount() - 1; j >= 0; --j )
 			{
-				DmeTime_t const& t = layer->GetKeyTime( j );
+				DmeTime_t &t = layer->GetKeyTime( j );
 				if ( t <= tMinTime )
 					continue;
 				if ( t >= tMaxTime )
@@ -898,22 +897,19 @@ void CSFMPhonemeExtractor::ClearInterstitialSpaces( CDmeChannelsClip *pChannelsC
 	}
 }
 
-void AddAnimSetBookmarkAtSoundMediaTime( const char *pName, DmeTime_t tStart, DmeTime_t tEnd, DmeClipStack_t const &srcStack, ExtractDesc_t& info )
+void AddAnimSetBookmarkAtSoundMediaTime( const char *pName, DmeTime_t tStart, DmeTime_t tEnd, const CUtlVector< CDmeHandle< CDmeClip > > &srcStack, ExtractDesc_t& info )
 {
-	tStart = srcStack.FromChildMediaTime( tStart, false );
-	tEnd   = srcStack.FromChildMediaTime( tEnd, false );
+	tStart = CDmeClip::FromChildMediaTime( srcStack, tStart, false );
+	tEnd   = CDmeClip::FromChildMediaTime( srcStack, tEnd, false );
 
 	tStart = info.m_pShot->ToChildMediaTime( tStart, false );
 	tEnd   = info.m_pShot->ToChildMediaTime( tEnd, false );
 
-	auto bookmark_set = info.m_pShot->GetActiveBookmarkSet();
-	if (!bookmark_set) return;
-
-	CDmeBookmark *pBookmark = CreateElement< CDmeBookmark >( pName, info.m_pSet->GetFileId() );
+	CDmeBookmark *pBookmark = CreateElement< CDmeBookmark >( pName );
 	pBookmark->SetNote( pName );
 	pBookmark->SetTime( tStart );
 	pBookmark->SetDuration( tEnd - tStart );
-	bookmark_set->GetBookmarks().AddToTail( pBookmark );
+	info.m_pSet->GetBookmarks().AddToTail( pBookmark );
 }
 
 //-----------------------------------------------------------------------------
@@ -950,10 +946,10 @@ void CSFMPhonemeExtractor::LogPhonemes( int nItemIndex,	ExtractDesc_t& info )
 
 	// Build a fast lookup of the visible sliders
 	int i;
-	CUtlDict< LogPreview_t *> controlLookup;
+	CUtlDict< LogPreview_t *, int > controlLookup;
 	for ( i = 0; i < info.m_ControlList.Count(); ++i )
 	{
-		controlLookup.Insert( info.m_ControlList[ i ]->m_hControl->GetName(), info.m_ControlList[ i ] );
+		controlLookup.Insert( info.m_ControlList[ i ].m_hControl->GetName(), &info.m_ControlList[ i ] );
 	}
 
 	// Only need to do this on the first item and we have multiple .wavs selected
@@ -965,12 +961,12 @@ void CSFMPhonemeExtractor::LogPhonemes( int nItemIndex,	ExtractDesc_t& info )
 	// Set up time selection, put channels into record and stamp out keyframes
 
 	// Convert original .wav start to animation set channels clip relative time
-	DmeClipStack_t srcStack;
+	CUtlVector< CDmeHandle< CDmeClip > > srcStack;
 	item.m_pClip->BuildClipStack( &srcStack, info.m_pMovie, info.m_pShot );
-	if ( srcStack.GetClipCount() == 0 )
+	if ( srcStack.Count() == 0 )
 	{
 		item.m_pClip->BuildClipStack( &srcStack, info.m_pMovie, NULL );
-		if ( srcStack.GetClipCount() == 0 )
+		if ( srcStack.Count() == 0 )
 		{
 			Msg( "Couldn't build stack sound clip to current shot\n" );
 			return;
@@ -978,20 +974,20 @@ void CSFMPhonemeExtractor::LogPhonemes( int nItemIndex,	ExtractDesc_t& info )
 	}
 
 	// NOTE: Time bounds measured in sound media time goes from 0 -> flWaveDuration
-	DmeTime_t tSoundMediaStartTime = srcStack.FromChildMediaTime( DMETIME_ZERO, false );
-	DmeTime_t tSoundMediaEndTime   = srcStack.FromChildMediaTime( DmeTime_t( item.m_flDuration ), false );
+	DmeTime_t tSoundMediaStartTime = CDmeClip::FromChildMediaTime( srcStack, DMETIME_ZERO, false );
+	DmeTime_t tSoundMediaEndTime   = CDmeClip::FromChildMediaTime( srcStack, DmeTime_t( item.m_flDuration ), false );
 
 	// NOTE: Start and end time are measured in sound media time
 	DmeTime_t tStartTime = item.m_pClip->GetStartInChildMediaTime();
 	DmeTime_t tEndTime   = item.m_pClip->GetEndInChildMediaTime();
 
 	// And convert back down into channels clip relative time
-	DmeClipStack_t dstStack;
+	CUtlVector< CDmeHandle< CDmeClip > > dstStack;
 	pChannelsClip->BuildClipStack( &dstStack, info.m_pMovie, info.m_pShot );
 
 	// Now convert back down to channels clip relative time
-	DmeTime_t tChannelMediaStartTime = dstStack.ToChildMediaTime( tSoundMediaStartTime, false );
-	DmeTime_t tChannelMediaEndTime   = dstStack.ToChildMediaTime( tSoundMediaEndTime, false );
+	DmeTime_t tChannelMediaStartTime = CDmeClip::ToChildMediaTime( dstStack, tSoundMediaStartTime, false );
+	DmeTime_t tChannelMediaEndTime   = CDmeClip::ToChildMediaTime( dstStack, tSoundMediaEndTime, false );
 
 	// Find a scale + offset which transforms data in media space of the sound [namely, the phonemes]
 	// into the media space of the channels [the logs that drive the facial animation]
@@ -1178,10 +1174,9 @@ void CSFMPhonemeExtractor::LogPhonemes( int nItemIndex,	ExtractDesc_t& info )
 void CSFMPhonemeExtractor::ReApply( ExtractDesc_t& info )
 {
 	if ( info.m_bCreateBookmarks )
-		if (auto bookmarks = info.m_pShot->GetActiveBookmarkSet())
-		{
-			bookmarks->GetBookmarks().RemoveAll();
-		}
+	{
+		info.m_pSet->GetBookmarks().RemoveAll();
+	}
 
 	for ( int nWorkItem = 0; nWorkItem < info.m_WorkList.Count(); ++nWorkItem )
 	{

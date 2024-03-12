@@ -15,7 +15,7 @@
 //#include "movieobjects/dmebalancetostereocalculatoroperator.h"
 #include "tier1/utlsymbol.h"
 
-#if 0
+
 // Names of attributes in controls we attach channels to
 #define CONTROL_CHANNEL_ATTRIBUTE_COUNT 4
 static const char *s_pChannelControls[CONTROL_CHANNEL_ATTRIBUTE_COUNT] =
@@ -187,6 +187,21 @@ void CFlexControlBuilder::RemoveChannelFromClips( CDmeChannel *pChannel )
 
 
 //-----------------------------------------------------------------------------
+// Removes a stereo operator from the animation set referring to it
+//-----------------------------------------------------------------------------
+void CFlexControlBuilder::RemoveStereoOpFromSet( CDmeBalanceToStereoCalculatorOperator *pSteroOp )
+{
+	// First, try to grab the channel referring to this op
+	const static UtlSymId_t symOperators = g_pDataModel->GetSymbol( "operators" );
+	CDmeAnimationSet *pAnimationSet = FindReferringElement< CDmeAnimationSet >( pSteroOp, symOperators );
+	if ( pAnimationSet )
+	{
+		pAnimationSet->RemoveOperator( pSteroOp );
+	}
+}
+
+
+//-----------------------------------------------------------------------------
 // Blows away the various elements trying to control a flex controller op
 //-----------------------------------------------------------------------------
 void CFlexControlBuilder::CleanupExistingFlexController( CDmeGameModel *pGameModel, CDmeGlobalFlexControllerOperator *pOp )
@@ -235,7 +250,7 @@ bool RemoveChannelIfUnused( CDmeChannel *pChannel, CDmeChannelsClip *pChannelsCl
 {
 	if ( !pChannel )
 		return false;
-	if ( pChannel->GetToElement() != nullptr)
+	if ( pChannel->GetToElement() != NULL )
 		return false;
 
 	pChannelsClip->RemoveChannel( pChannel );
@@ -296,7 +311,7 @@ void CFlexControlBuilder::RemoveUnusedExistingFlexControllers( CDmeGameModel *pG
 void CFlexControlBuilder::GetExistingMonoLog( ExistingLogInfo_t *pExistingLog, 
 											 CDmeFilmClip *pClip, CDmeGlobalFlexControllerOperator *pMonoOp )
 {
-	pExistingLog->m_pLog = nullptr;
+	pExistingLog->m_pLog = NULL;
 
 	const static UtlSymId_t symToElement = g_pDataModel->GetSymbol( "toElement" );
 	CDmeChannel *pMonoChannel = FindReferringElement< CDmeChannel >( pMonoOp, symToElement );
@@ -336,7 +351,7 @@ CDmeChannelsClip* CFlexControlBuilder::FindChannelsClipContainingChannel( CDmeFi
 
 		DMETRACKGROUP_FOREACH_CLIP_TYPE_END()
 	}
-	return nullptr;
+	return NULL;
 }
 
 
@@ -347,10 +362,10 @@ void CFlexControlBuilder::ComputeChannelTimeTransform( DmeTime_t *pOffset, doubl
 {
 	// Determine the global time of the start + end of the log
 	DmeClipStack_t srcStack;
-	pChannelsClip->BuildClipStack( &srcStack, m_pMovie, nullptr);
+	pChannelsClip->BuildClipStack( &srcStack, m_pMovie, NULL );
 
-	*pOffset = srcStack.FromChildMediaTime( DMETIME_ZERO, false );
-	DmeTime_t duration = srcStack.FromChildMediaTime( DmeTime_t( 10000 ), false );
+	*pOffset = CDmeClip::FromChildMediaTime( srcStack, DMETIME_ZERO, false );
+	DmeTime_t duration = CDmeClip::FromChildMediaTime( srcStack, DmeTime_t( 10000 ), false );
 	duration -= *pOffset;
 	*pScale = duration.GetSeconds();
 }
@@ -366,9 +381,53 @@ bool CFlexControlBuilder::ComputeChannelTimeTransform( DmeTime_t *pOffset, doubl
 }
 
 
+//-----------------------------------------------------------------------------
+// Returns an existing value/balance log
+//-----------------------------------------------------------------------------
+void CFlexControlBuilder::GetExistingVBLog( ExistingLogInfo_t *pLogs, CDmeFilmClip *pClip, CDmeBalanceToStereoCalculatorOperator *pStereoOp )
+{
+	// Stereo operators always have value/balance logs attached
+	DmAttributeReferenceIterator_t i = g_pDataModel->FirstAttributeReferencingElement( pStereoOp->GetHandle() );
+	for ( ; i != DMATTRIBUTE_REFERENCE_ITERATOR_INVALID; i = g_pDataModel->NextAttributeReferencingElement( i ) )
+	{
+		CDmAttribute *pAttribute = g_pDataModel->GetAttribute( i );
+		CDmeChannel *pChannel = CastElement< CDmeChannel >( pAttribute->GetOwner() );
+		const static UtlSymId_t symToElement = g_pDataModel->GetSymbol( "toElement" );
+		if ( !pChannel || pAttribute->GetNameSymbol() != symToElement )
+			continue;
+
+		const char *pToAttributeName = pChannel->GetToAttribute()->GetName();
+		int nLogIndex = -1;
+		if ( !Q_stricmp( pToAttributeName, "value" ) )
+		{
+			nLogIndex = CONTROL_VALUE;
+		}
+		else if ( !Q_stricmp( pToAttributeName, "balance" ) )
+		{
+			nLogIndex = CONTROL_BALANCE;
+		}
+		else
+		{
+			continue;
+		}
+
+		CDmeFloatLog *pLog = CastElement< CDmeFloatLog >( pChannel->GetLog() );
+		if ( !pLog )
+			continue;
+
+		// Compute a scale and offset transforming log time into global time
+		if ( !ComputeChannelTimeTransform( &pLogs[nLogIndex].m_GlobalOffset, &pLogs[nLogIndex].m_flGlobalScale, pClip, pChannel ) )
+			continue;
+
+		// Detach the  
+		pLogs[nLogIndex].m_pLog = pLog;
+		pChannel->SetLog( NULL );	// Detach
+	}
+}
+
+
 static void AddKeyToLogs( CDmeTypedLog< float > *valueLog, CDmeTypedLog< float > *balanceLog, const DmeTime_t& keyTime, float lval, float rval )
 {
-#if 0
 	// Convert left right into value, balance
 	float value, balance;
 	LeftRightToValueBalance( &value, &balance, lval, rval );
@@ -378,9 +437,6 @@ static void AddKeyToLogs( CDmeTypedLog< float > *valueLog, CDmeTypedLog< float >
 
 	valueLog->SetKey( keyTime, value );
 	balanceLog->SetKey( keyTime, balance );
-#else
-	AssertMsg(false, "Unimplemented because sfmobjects for CSGO were not leaked");
-#endif
 }
 
 static void ConvertLRToVBLog( CDmeFloatLog *pValueLog, CDmeFloatLog *pBalanceLog, CDmeFloatLog *pLeftLog, CDmeFloatLog *pRightLog, DmeTime_t rightOffset, double flRightScale )
@@ -430,6 +486,74 @@ static void ConvertLRToVBLog( CDmeFloatLog *pValueLog, CDmeFloatLog *pBalanceLog
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Converts an existing value/balance log
+//-----------------------------------------------------------------------------
+void CFlexControlBuilder::ConvertExistingLRLogs( ExistingLogInfo_t *pLogs, 
+												CDmeFilmClip *pClip, CDmeChannel *pLeftChannel, CDmeChannel *pRightChannel )
+{
+	CDmeFloatLog *pRightLog = CastElement< CDmeFloatLog >( pRightChannel->GetLog() );
+	CDmeFloatLog *pLeftLog = CastElement< CDmeFloatLog >( pLeftChannel->GetLog() );
+	if ( !pRightLog || !pLeftLog )
+		return;
+
+	// Compute a scale + offset to transform the right log to get it in the same space as the left log
+	DmeTime_t leftOffset, rightOffset;
+	double flLeftScale, flRightScale;
+	if ( !ComputeChannelTimeTransform( &leftOffset, &flLeftScale, pClip, pLeftChannel ) )
+		return;
+	if ( !ComputeChannelTimeTransform( &rightOffset, &flRightScale, pClip, pRightChannel ) )
+		return;
+
+	flRightScale = ( flRightScale != 0.0f ) ? flLeftScale / flRightScale : 1.0;
+	rightOffset = leftOffset - DmeTime_t( rightOffset.GetSeconds() * flRightScale );
+
+	pLogs[CONTROL_VALUE].m_pLog = CreateElement< CDmeFloatLog >( "value" );
+	pLogs[CONTROL_VALUE].m_GlobalOffset = leftOffset;
+	pLogs[CONTROL_VALUE].m_flGlobalScale = flLeftScale;
+
+	pLogs[CONTROL_BALANCE].m_pLog = CreateElement< CDmeFloatLog >( "balance" );
+	pLogs[CONTROL_BALANCE].m_GlobalOffset = leftOffset; // NOTE: This is correct! All logs are transformed into left channel time
+	pLogs[CONTROL_BALANCE].m_flGlobalScale = flLeftScale;
+
+	ConvertLRToVBLog( pLogs[CONTROL_VALUE].m_pLog, pLogs[CONTROL_BALANCE].m_pLog,
+		pLeftLog, pRightLog, rightOffset, flRightScale );
+
+	//	DestroyElement( pLeftLog );
+	//	DestroyElement( pRightLog );
+}
+
+
+//-----------------------------------------------------------------------------
+// Returns an existing stereo log, performing conversion if necessary
+//-----------------------------------------------------------------------------
+void CFlexControlBuilder::GetExistingStereoLog( ExistingLogInfo_t *pLogs, CDmeFilmClip *pClip,
+											   CDmeGlobalFlexControllerOperator *pRightOp, CDmeGlobalFlexControllerOperator *pLeftOp )
+{
+	pLogs[CONTROL_VALUE].m_pLog = NULL;
+	pLogs[CONTROL_BALANCE].m_pLog = NULL;
+
+	// First, try to grab the channel referring to this op
+	const static UtlSymId_t symToElement = g_pDataModel->GetSymbol( "toElement" );
+	CDmeChannel *pChannel = FindReferringElement< CDmeChannel >( pRightOp, symToElement );
+	if ( !pChannel )
+		return;
+
+	// Sometimes a stereo op will be read from by this channel
+	CDmeBalanceToStereoCalculatorOperator *pStereoOp = CastElement< CDmeBalanceToStereoCalculatorOperator >( pChannel->GetFromElement() );
+	if ( pStereoOp )
+	{
+		GetExistingVBLog( pLogs, pClip, pStereoOp );
+		return;
+	}
+
+	// In this case, we recorded game data and we have left/right logs
+	CDmeChannel *pLeftChannel = FindReferringElement< CDmeChannel >( pLeftOp, symToElement );
+	if ( !pLeftChannel )
+		return;
+	ConvertExistingLRLogs( pLogs, pClip, pLeftChannel, pChannel );
+}
+
 
 //-----------------------------------------------------------------------------
 // Fixup list of existing flex controller logs
@@ -456,7 +580,7 @@ void CFlexControlBuilder::FixupExistingFlexControlLogList( CDmeFilmClip *pCurren
 				if ( !pOp )
 					continue;
 
-				if ( pOp->m_gameModel.GetHandle() != pGameModel->GetHandle() )
+				if ( pOp->m_gameModel != pGameModel->GetHandle() )
 					continue;
 
 				int nGlobalIndex = pOp->GetGlobalIndex();
@@ -600,6 +724,51 @@ static const char *s_pStereoInputPrefix[2] =
 	"balance",
 };
 
+void CFlexControlBuilder::BuildStereoFlexControllerOps( CDmeAnimationSet *pAnimationSet, 
+													   CDmeGameModel *pGameModel, CDmeChannelsClip *pChannelsClip, ControlInfo_t &info )
+{
+	// Create an operator which converts value/balance to left/right
+	CDmrElementArray< CDmeOperator > operators = pAnimationSet->GetOperators();
+	CDmeBalanceToStereoCalculatorOperator *pStereoCalcOp = 
+		CreateElement< CDmeBalanceToStereoCalculatorOperator >( info.m_pControlName, pAnimationSet->GetFileId() );
+	operators.AddToTail( pStereoCalcOp->GetHandle() );
+
+	pStereoCalcOp->SetValue< float >( "value", info.m_pDefaultValue[CONTROL_VALUE] );
+	pStereoCalcOp->SetValue< float >( "balance", info.m_pDefaultValue[CONTROL_BALANCE] );
+
+	// Connect channels from animation set controls to balance operator to flex controller operators
+	char pChannelName[ 256 ];
+	char pResultName[ 256 ];
+	for ( int i = 0; i < 2; ++i )
+	{
+		// Get the global flex controller name and index
+		const FlexControllerInfo_t& fcInfo = m_FlexControllerInfo[ info.m_pControllerIndex[i] ];
+
+		// Create an operator which drives facial flex setting
+		CDmeGlobalFlexControllerOperator *pFlexControllerOp = pGameModel->AddGlobalFlexController(
+			fcInfo.m_pFlexControlName, fcInfo.m_nGlobalIndex );
+
+		// Now create a channel which connects the output of the stereo op to the flex controller op
+		Q_snprintf( pResultName, sizeof( pResultName ), "result_%s", s_pStereoOutputPrefix[ i ] );
+		Q_snprintf( pChannelName, sizeof( pChannelName ), "%s_flex_channel", fcInfo.m_pFlexControlName );
+		pChannelsClip->CreatePassThruConnection( pChannelName, pStereoCalcOp, 
+			pResultName, pFlexControllerOp, "flexWeight" );
+
+		// Create a channel which connects the control to the input of the stereo op
+		Q_snprintf( pChannelName, sizeof( pChannelName ), "%s_%s_channel", info.m_pControlName, s_pStereoInputPrefix[ i ] );
+		info.m_ppControlChannel[i] = pChannelsClip->CreatePassThruConnection( pChannelName, 
+			info.m_pControl, s_pStereoInputPrefix[ i ], pStereoCalcOp, s_pStereoInputPrefix[ i ] );
+
+		// NOTE: The animation set slider panel looks for these custom attributes
+		Q_snprintf( pChannelName, sizeof(pChannelName), "%schannel", s_pStereoInputPrefix[ i ] );
+		info.m_pControl->SetValue( pChannelName, info.m_ppControlChannel[i] );
+
+		// Switch the channel into play mode by default
+		info.m_ppControlChannel[i]->SetMode( CM_PLAY );
+	}
+}
+
+
 //-----------------------------------------------------------------------------
 // Build the infrastructure of the ops that connect that control to the dmegamemodel
 //-----------------------------------------------------------------------------
@@ -730,7 +899,7 @@ void CFlexControlBuilder::SetupLogs( CDmeChannelsClip *pChannelsClip, bool bUseE
 		}
 	}
 }
-#endif
+
 
 //-----------------------------------------------------------------------------
 // Main entry point for creating flex animation set controls
@@ -738,7 +907,6 @@ void CFlexControlBuilder::SetupLogs( CDmeChannelsClip *pChannelsClip, bool bUseE
 void CFlexControlBuilder::CreateAnimationSetControls( CDmeFilmClip *pMovie, CDmeAnimationSet *pAnimationSet, 
 	CDmeGameModel *pGameModel, CDmeFilmClip *pSourceClip, CDmeChannelsClip *pDestClip, bool bUseExistingLogs )
 {
-#if 0
 	m_pMovie = pMovie;
 
 	FixupExistingFlexControlLogList( pSourceClip, pGameModel );
@@ -771,9 +939,6 @@ void CFlexControlBuilder::CreateAnimationSetControls( CDmeFilmClip *pMovie, CDme
 
 	// Attach existing logs to the new input controls created in CreateFlexControls
 	SetupLogs( pDestClip, bUseExistingLogs );
-#else
-	AssertMsg(false, "Unimplemented because sfmobjects for CSGO were not leaked");
-#endif
 }
 
 
@@ -782,9 +947,5 @@ void CFlexControlBuilder::CreateAnimationSetControls( CDmeFilmClip *pMovie, CDme
 //-----------------------------------------------------------------------------
 void SetupDefaultFlexController()
 {
-#if 0
 	g_pGlobalFlexController = &s_GlobalFlexController;
-#else
-	AssertMsg(false, "Unimplemented because sfmobjects for CSGO were not leaked");
-#endif
 }

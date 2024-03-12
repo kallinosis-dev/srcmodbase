@@ -136,7 +136,7 @@ inline const CDmElement *CSFMSession::Root() const
 
 inline CDmElement *CSFMSession::GetSettings() const
 {
-	return m_hRoot.Get() ? m_hRoot->GetValueElement< CDmElement >( "settings" ) : nullptr;
+	return m_hRoot.Get() ? m_hRoot->GetValueElement< CDmElement >( "settings" ) : NULL;
 }
 
 template< class T >
@@ -156,7 +156,7 @@ inline CDmAttribute *CSFMSession::GetSettingsAttribute( const char *pSettingName
 	CDmElement *pSettings = GetSettings();
 	if ( pSettings )
 		return pSettings->GetAttribute( pSettingName, type );
-	return nullptr;
+	return NULL;
 }
 
 template< class T > 
@@ -173,7 +173,7 @@ template< class E >
 inline E* CSFMSession::GetSettingsElement( const char *pSettingName ) const
 {
 	CDmElement *pSettings = GetSettings();
-	return pSettings ? pSettings->GetValueElement< E >( pSettingName ) : nullptr;
+	return pSettings ? pSettings->GetValueElement< E >( pSettingName ) : NULL;
 }
 
 
