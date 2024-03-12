@@ -62,7 +62,7 @@ static CDmeChannelsClip* CreateChannelsClip( CDmeAnimationSet *pAnimationSet, CD
 // Creates a constant valued log
 //-----------------------------------------------------------------------------
 template < class T >
-CDmeChannel *CreateConstantValuedLog( CDmeChannelsClip *channelsClip, const char *pName, CDmElement *pToElement, const char *pToAttr, const T &value )
+CDmeChannel *CreateConstantValuedLog( CDmeChannelsClip *channelsClip, char const* basename, const char *pName, CDmElement *pToElement, const char *pToAttr, const T &value )
 {
 	char name[ 256 ];
 	Q_snprintf( name, sizeof( name ), "%s_%s channel", basename, pName );
@@ -71,9 +71,9 @@ CDmeChannel *CreateConstantValuedLog( CDmeChannelsClip *channelsClip, const char
 	pChannel->SetMode( CM_PLAY );
 	pChannel->CreateLog( CDmAttributeInfo< T >::AttributeType() );
 	pChannel->SetOutput( pToElement, pToAttr );
-	pChannel->GetLog()->SetValueThreshold( 0.0f );
+	auto typedlog = (CDmeTypedLog< T > *)pChannel->GetLog();
 
-	((CDmeTypedLog< T > *)pChannel->GetLog())->InsertKey( DmeTime_t( 0 ), value );
+	typedlog->InsertKey( DmeTime_t( 0 ), value );
 
 	channelsClip->m_Channels.AddToTail( pChannel );
 
@@ -94,7 +94,6 @@ static void CreateTransformChannels( CDmeTransform *pTransform, const char *pBas
 	pPosChannel->SetMode( CM_PLAY );
 	pPosChannel->CreateLog( AT_VECTOR3 );
 	pPosChannel->SetOutput( pTransform, "position" );
-	pPosChannel->GetLog()->SetValueThreshold( 0.0f );
 	pChannelsClip->m_Channels.AddToTail( pPosChannel );
 
 	// create, connect and cache boneRot channel
@@ -103,7 +102,6 @@ static void CreateTransformChannels( CDmeTransform *pTransform, const char *pBas
 	pRotChannel->SetMode( CM_PLAY );
 	pRotChannel->CreateLog( AT_QUATERNION );
 	pRotChannel->SetOutput( pTransform, "orientation" );
-	pRotChannel->GetLog()->SetValueThreshold( 0.0f );
 	pChannelsClip->m_Channels.AddToTail( pRotChannel );
 }
 
@@ -131,13 +129,9 @@ static void CreateAnimationLogs( CDmeChannelsClip *channelsClip, CDmeGameModel *
 	rotchannels.EnsureCapacity( numbones );
 
 	Vector pos[ MAXSTUDIOBONES ];
-	Quaternion q[ MAXSTUDIOBONES ];
+	BoneQuaternionAligned q[ MAXSTUDIOBONES ];
 
-	float poseparameter[ MAXSTUDIOPOSEPARAM ];
-	for ( int pp = 0; pp < MAXSTUDIOPOSEPARAM; ++pp )
-	{
-		poseparameter[ pp ] = 0.0f;
-	}
+	float poseparameter[ MAXSTUDIOPOSEPARAM ] = { 0.0f };
 
 	float flSequenceDuration = Studio_Duration( &hdr, sequence, poseparameter );
 	mstudioseqdesc_t &seqdesc = hdr.pSeqdesc( sequence );
@@ -418,7 +412,6 @@ static void SetupBoneTransform( CDmeFilmClip *shot, CDmeChannelsClip *srcChannel
 			log = pAttachChannel->CreateLog( channelTypes[ i ] );
 		}
 
-		log->SetValueThreshold( 0.0f );
 		if ( bAttachToGameRecording )
 		{
 			Vector pos;
@@ -442,12 +435,8 @@ static void SetupBoneTransform( CDmeFilmClip *shot, CDmeChannelsClip *srcChannel
 		CStudioHdr studiohdr( hdr, g_pMDLCache );
 
 		Vector pos[ MAXSTUDIOBONES ];
-		Quaternion q[ MAXSTUDIOBONES ];
-		float poseparameter[ MAXSTUDIOPOSEPARAM ];
-		for ( int pp = 0; pp < MAXSTUDIOPOSEPARAM; ++pp )
-		{
-			poseparameter[ pp ] = 0.0f;
-		}
+		BoneQuaternionAligned q[ MAXSTUDIOBONES ];
+		float poseparameter[ MAXSTUDIOPOSEPARAM ] = { 0.0f };
 
 		// Set up skeleton
 		IBoneSetup boneSetup( &studiohdr, BONE_USED_BY_ANYTHING, poseparameter );
@@ -474,8 +463,8 @@ static void SetupBoneTransform( CDmeFilmClip *shot, CDmeChannelsClip *srcChannel
 static void SetupRootTransform( CDmeFilmClip *shot, CDmeChannelsClip *srcChannelsClip, 
 	CDmeChannelsClip *channelsClip, CDmElement *control, CDmeGameModel *gameModel, const char *basename, bool bAttachToGameRecording )
 {
-	char *channelNames[] = { "position", "orientation" };
-	char *valueNames[] = { "valuePosition", "valueOrientation" };
+	char const* channelNames[] = { "position", "orientation" };
+	char const* valueNames[] = { "valuePosition", "valueOrientation" };
 	DmAttributeType_t channelTypes[] = { AT_VECTOR3, AT_QUATERNION };
 	const char *suffix[]			= { "Pos", "Rot" };
 	DmAttributeType_t logType[]		= { AT_VECTOR3, AT_QUATERNION };
@@ -538,8 +527,6 @@ static void SetupRootTransform( CDmeFilmClip *shot, CDmeChannelsClip *srcChannel
 			{
 				log = pAttachChannel->CreateLog( logType[ i ] );
 			}
-
-			log->SetValueThreshold( 0.0f );
 
 			Vector vecPos;
 			Quaternion qOrientation;

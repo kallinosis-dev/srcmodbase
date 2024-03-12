@@ -2923,7 +2923,6 @@ static CDmeFloatLog *CreateMorphChannel( const char *pszChannelName, CDmeChannel
 	pDmeFloatChannel->SetOutput( pDmeToElement, "flexWeight" );
 
 	CDmeFloatLog *pDmeFloatLog = pDmeFloatChannel->CreateLog< float >();
-	pDmeFloatLog->SetValueThreshold( 1.0e-6 );
 	pDmeFloatChannel->SetValue( "channelType", "morph" );
 	pDmeChannelsClip->m_Channels.AddToTail( pDmeFloatChannel );
 
@@ -3082,14 +3081,12 @@ void CDmFbxSerializer::ComputeAnimDataList_R(
 	pDmePosChannel->SetMode( CM_PLAY );
 	pDmePosChannel->SetOutput( pDmeTransform, "position" );
 	CDmeVector3Log *pDmePosLog = pDmePosChannel->CreateLog< Vector >();
-	pDmePosLog->SetValueThreshold( 1.0e-6 );
 	pDmeChannelsClip->m_Channels.AddToTail( pDmePosChannel );
 
 	CDmeChannel *pDmeRotChannel = CreateElement< CDmeChannel >( CFmtStr( "%s_o", pDmeTransform->GetName() ).Access(), pDmeChannelsClip->GetFileId() );
 	pDmeRotChannel->SetMode( CM_PLAY );
 	pDmeRotChannel->SetOutput( pDmeTransform, "orientation" );
 	CDmeQuaternionLog *pDmeRotLog = pDmeRotChannel->CreateLog< Quaternion >();
-	pDmeRotLog->SetValueThreshold( 1.0e-6 );
 	pDmeChannelsClip->m_Channels.AddToTail( pDmeRotChannel );
 
 	pAnimData->m_pDmePosLog = pDmePosLog;

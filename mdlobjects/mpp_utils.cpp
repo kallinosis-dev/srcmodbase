@@ -700,14 +700,12 @@ void GetAbsMotion( CDmeChannel **ppDmePChannel, CDmeChannel **ppDmeOChannel, CDm
 		CreateElement< CDmeChannel >( ( CUtlString( pDmeDag->GetName() ) + "_p" ).Get(), pDmeDag->GetFileId() );
 	*ppDmePChannel = pDstPChannel;
 	CDmeVector3Log *pDstPLog = pDstPChannel->CreateLog< Vector >();
-	pDstPLog->SetValueThreshold( 1.0e-6 );
 
 	CDmeChannel *pDstOChannel = pSrcOChannel ?
 		CreateElement< CDmeChannel >( pSrcOChannel->GetName(), pSrcPChannel->GetFileId() ) :
 		CreateElement< CDmeChannel >( ( CUtlString( pDmeDag->GetName() ) + "_o" ).Get(), pDmeDag->GetFileId() );
 	*ppDmeOChannel = pDstOChannel;
 	CDmeQuaternionLog *pDstOLog = pDstOChannel->CreateLog< Quaternion >();
-	pDstOLog->SetValueThreshold( 1.0e-6 );
 
 	matrix3x4_t wm;
 	matrix3x4_t twm;

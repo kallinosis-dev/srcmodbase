@@ -77,8 +77,8 @@ private:
 	void StampControlValueLogs( CDmePreset *preset, DmeTime_t tHeadPosition, float flIntensity, CUtlDict< LogPreview_t *, int > &controlLookup );
 	void WriteCurrentValuesIntoLogLayers( DmeTime_t tHeadPosition, const CUtlDict< LogPreview_t *, int > &controlLookup );
 	void WriteDefaultValuesIntoLogLayers( DmeTime_t tHeadPosition, const CUtlDict< LogPreview_t *, int > &controlLookup );
-	void BuildPhonemeLogList( CUtlVector< LogPreview_t > &list, CUtlVector< CDmeLog * > &logs );
-	CDmeChannelsClip* FindFacialChannelsClip( const CUtlVector< LogPreview_t > &list );
+	void BuildPhonemeLogList(CUtlVector<LogPreview_t*>& list, CUtlVector< CDmeLog * > &logs);
+	CDmeChannelsClip* FindFacialChannelsClip(const CUtlVector<LogPreview_t*>& list);
 	void BuildPhonemeToPresetMapping( const CUtlVector< CBasePhonemeTag * > &stream, CDmeAnimationSet *pSet, CDmePresetGroup * pPresetGroup, CUtlDict< CDmePreset *, unsigned short > &phonemeToPresetDict );
 
 	CUtlVector< Extractor >	m_Extractors;
@@ -539,9 +539,10 @@ void CSFMPhonemeExtractor::Extract( const PE_APITYPE& apiType, ExtractDesc_t& in
 	}
 
 	if ( info.m_bCreateBookmarks )
-	{
-		info.m_pSet->GetBookmarks().RemoveAll();
-	}
+		if(auto bookmarks = info.m_pShot->GetActiveBookmarkSet())
+		{
+			bookmarks->GetBookmarks().RemoveAll();
+		}
 
 	for ( nWorkItem = 0; nWorkItem < info.m_WorkList.Count(); ++nWorkItem )
 	{
@@ -611,15 +612,14 @@ void CSFMPhonemeExtractor::BuildPhonemeToPresetMapping( const CUtlVector< CBaseP
 //-----------------------------------------------------------------------------
 // Finds the channels clip which refers to facial control values 
 //-----------------------------------------------------------------------------
-CDmeChannelsClip* CSFMPhonemeExtractor::FindFacialChannelsClip( const CUtlVector< LogPreview_t > &list )
+CDmeChannelsClip* CSFMPhonemeExtractor::FindFacialChannelsClip(const CUtlVector<LogPreview_t*>& list)
 {
 	CDmeChannelsClip *pChannelsClip = nullptr;
 
-	int i;
-	for ( i = list.Count() - 1; i >= 0; --i )
+	for ( int i = list.Count() - 1; i >= 0; --i )
 	{
-		const LogPreview_t &lp = list[i];
-		CDmeChannelsClip *check = FindAncestorReferencingElement< CDmeChannelsClip >( (CDmElement *)lp.m_hChannels[ 0 ].Get() );
+		const LogPreview_t *lp = list[i];
+		CDmeChannelsClip *check = FindAncestorReferencingElement< CDmeChannelsClip >( lp->m_hChannels[ 0 ].Get() );
 
 		if ( !pChannelsClip && check )
 		{
@@ -646,19 +646,19 @@ CDmeChannelsClip* CSFMPhonemeExtractor::FindFacialChannelsClip( const CUtlVector
 //-----------------------------------------------------------------------------
 // Builds the list of logs which target facial control values 
 //-----------------------------------------------------------------------------
-void CSFMPhonemeExtractor::BuildPhonemeLogList( CUtlVector< LogPreview_t > &list, CUtlVector< CDmeLog * > &logs )
+void CSFMPhonemeExtractor::BuildPhonemeLogList(CUtlVector<LogPreview_t*>& list, CUtlVector< CDmeLog * > &logs)
 {
 	for ( int i = 0; i < list.Count(); ++i )
 	{
-		LogPreview_t& p = list[ i ];
+		LogPreview_t* p = list[ i ];
 
-		for ( int channel = 0; channel < LOG_PREVIEW_FLEX_CHANNEL_COUNT; ++channel )
+		for (CDmeHandle<CDmeChannel> m_hChannel : p->m_hChannels)
 		{
-			CDmeChannel *ch = p.m_hChannels[ channel ];
+			CDmeChannel *ch = m_hChannel;
 			if ( !ch )
 				continue;
 
-			CDmeLog *log = p.m_hChannels[ channel ]->GetLog();
+			CDmeLog *log = m_hChannel->GetLog();
 			if ( !log )
 				continue;
 
@@ -906,11 +906,14 @@ void AddAnimSetBookmarkAtSoundMediaTime( const char *pName, DmeTime_t tStart, Dm
 	tStart = info.m_pShot->ToChildMediaTime( tStart, false );
 	tEnd   = info.m_pShot->ToChildMediaTime( tEnd, false );
 
-	CDmeBookmark *pBookmark = CreateElement< CDmeBookmark >( pName );
+	auto bookmark_set = info.m_pShot->GetActiveBookmarkSet();
+	if (!bookmark_set) return;
+
+	CDmeBookmark *pBookmark = CreateElement< CDmeBookmark >( pName, info.m_pSet->GetFileId() );
 	pBookmark->SetNote( pName );
 	pBookmark->SetTime( tStart );
 	pBookmark->SetDuration( tEnd - tStart );
-	info.m_pSet->GetBookmarks().AddToTail( pBookmark );
+	bookmark_set->GetBookmarks().AddToTail( pBookmark );
 }
 
 //-----------------------------------------------------------------------------
@@ -1175,9 +1178,10 @@ void CSFMPhonemeExtractor::LogPhonemes( int nItemIndex,	ExtractDesc_t& info )
 void CSFMPhonemeExtractor::ReApply( ExtractDesc_t& info )
 {
 	if ( info.m_bCreateBookmarks )
-	{
-		info.m_pSet->GetBookmarks().RemoveAll();
-	}
+		if (auto bookmarks = info.m_pShot->GetActiveBookmarkSet())
+		{
+			bookmarks->GetBookmarks().RemoveAll();
+		}
 
 	for ( int nWorkItem = 0; nWorkItem < info.m_WorkList.Count(); ++nWorkItem )
 	{

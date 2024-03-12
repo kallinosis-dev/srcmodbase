@@ -206,7 +206,7 @@ void DestroyLayerData( CUtlVector< KeyValues* > &layerData );
 void RetimeLogData( CDmeChannelsClip *pSrcChannelsClip, CDmeChannelsClip *pDstChannelsClip, CDmeLog *pLog );
 void TransferRemainingChannels( CDmeFilmClip *shot, CDmeChannelsClip *destClip, CDmeChannelsClip *srcClip );
 template < class T >
-CDmeChannel *CreateConstantValuedLog( CDmeChannelsClip *channelsClip, const char *pName, CDmElement *pToElement, const char *pToAttr, const T &value );
+CDmeChannel *CreateConstantValuedLog( CDmeChannelsClip *channelsClip, char const* basename, const char *pName, CDmElement *pToElement, const char *pToAttr, const T &value );
 
 
 CDmeTransformControl *CreateTransformControlAndChannels( const char *pName, CDmeTransform *pTransform, CDmeChannelsClip *pSrcChannelsClip, CDmeChannelsClip *pDstChannelsClip, CDmeAnimationSet *pAnimationSet,  bool bUseExistingLogData );
