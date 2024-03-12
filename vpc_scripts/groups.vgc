@@ -318,8 +318,8 @@ $Group "everything"
 	"server"
 	"serverbrowser"
 	"serverplugin_empty"
-	"sfmgen"
-	"sfmobjects"
+	//"sfmgen" // TODO_UPDATE_SFMOBJECTS 
+	//"sfmobjects" // TODO_UPDATE_SFMOBJECTS 
 	"shadercompile_dll"
 	"shadercompile_launcher"
 	"shaderapidx9"

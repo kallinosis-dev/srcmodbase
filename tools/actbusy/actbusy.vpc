@@ -45,7 +45,7 @@ $Project "Actbusy"
 		$Lib mathlib
 		$Lib matsys_controls
 		$Lib movieobjects
-		$Lib sfmobjects
+		//$Lib sfmobjects //TODO_UPDATE_SFMOBJECTS 
 		$Lib tier2
 		$Lib tier3
 		$Lib toolutils

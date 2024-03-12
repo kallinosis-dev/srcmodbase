@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2008, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2008, Valve Corporation, All rights reserved. =======
 //
 // Purpose: CSFMScriptMgr declaration, defines the interface of the sfm script
 // manager class which is used to run scripts and provides and interface for
@@ -11,6 +11,8 @@
 #ifdef _WIN32
 #pragma once
 #endif
+
+#ifdef TODO_UPDATE_SFMOBJECTS
 
 #include "sfmobjects/sfmrigutils.h"
 #include "movieobjects/dmechannel.h"
@@ -299,6 +301,6 @@ private:
 
 // Global pointer to the active script manager, created and destroyed by RunScript()
 extern CSFMScriptMgr *g_pScriptMgr;
-
+#endif
 
 #endif // SFMSCRIPTMGR_H

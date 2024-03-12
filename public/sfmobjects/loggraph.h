@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2009, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2009, Valve Corporation, All rights reserved. =======
 //
 // Declaration of CLogGraph, a utility for drawing logs in a graph with scale 
 // and offset.
@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "vgui/VGUI.h"
 #include "movieobjects/dmeclip.h"
 #include "movieobjects/dmelog.h"
@@ -204,6 +205,6 @@ private:
 
 
 DmeTime_t GetTimeForFrame( float frame, const DmeFramerate_t &framerate );
-
+#endif
 
 #endif // LOGGRAPH_H

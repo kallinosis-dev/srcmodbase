@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2009, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2009, Valve Corporation, All rights reserved. =======
 //
 // Declaration of the CGraphEditor class, which is used to perform direct 
 // manipulation of log data as if it were a curve.
@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "datamodel/dmelement.h"
 #include "sfmobjects/dmegrapheditorstate.h"
 
@@ -226,7 +227,6 @@ private:
 
 
 };
-
-
+#endif
 
 #endif // GRAPHEDITOR_H

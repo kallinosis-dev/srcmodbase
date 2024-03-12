@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2009, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2009, Valve Corporation, All rights reserved. =======
 //
 // Declaration of CGraphEditorView class
 //
@@ -10,6 +10,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "sfmobjects/grapheditor.h"
 #include "loggraph.h"
 
@@ -185,6 +186,6 @@ private:
 
 
 };
-
+#endif
 
 #endif // GRAPHEDITORPANEL_H

@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2009, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2009, Valve Corporation, All rights reserved. =======
 //
 // Declaration of CDmeGraphEditorState, a data model element which stores 
 // the active state data for the graph editor. 
@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "sfmobjects/dmegrapheditorcurve.h"
 #include "movieobjects/dmechannel.h"
 #include "movieobjects/dmebookmark.h"
@@ -123,6 +124,6 @@ private:
 
 	friend class CUndoGraphEditorSelectKeys;
 };
-
+#endif
 
 #endif // DMEGRAPHEDITORSTATE_H

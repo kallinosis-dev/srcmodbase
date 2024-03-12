@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2007, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2007, Valve Corporation, All rights reserved. =======
 //
 // A class representing a projected "light"
 //
@@ -10,6 +10,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "movieobjects/dmelight.h"
 
 //-----------------------------------------------------------------------------
@@ -78,6 +79,6 @@ private:
 	CDmaVar< float >	m_flPlaneOffset;
 	CDmaVar< float >	m_flVolumetricIntensity;
 };
-
+#endif
 
 #endif // DMEPROJECTEDLIGHT_H

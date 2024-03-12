@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2009, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2009, Valve Corporation, All rights reserved. =======
 //
 // Declaration of CDmeGraphEditorState, a data model element which stores 
 // the active state data for the graph editor. 
@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "movieobjects/dmechannel.h"
 #include "datamodel/dmelement.h"
 #include "checksum_crc.h"
@@ -478,7 +479,6 @@ void QuaternionToEuler( const Quaternion &q, Vector &rotation, Vector &absRotati
 void EulerToQuaternion( const Vector &euler, Quaternion &quat );
 bool ConvertLogEulerToQuaternion( const CDmeVector3LogLayer *pEulerLayer, CDmeQuaternionLogLayer *pQuatLayer );
 bool ConvertLogQuaterionToEuler( const CDmeQuaternionLogLayer *pQuatLayer, CDmeVector3LogLayer *pEulerLayer, DmeFramerate_t sampleRate, const DmeClipStack_t &clipstack );
-
-
+#endif
 
 #endif // DMEGRAPHEDITORCURVE_H

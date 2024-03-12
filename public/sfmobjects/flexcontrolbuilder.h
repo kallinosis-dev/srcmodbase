@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // A class used to build flex animation controls for an animation set
 //
@@ -10,7 +10,7 @@
 #pragma once
 #endif
 
-
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "tier1/utlvector.h"
 #include "movieobjects/dmelog.h"
 
@@ -146,6 +146,7 @@ private:
 // Initialize default global flex controller
 //-----------------------------------------------------------------------------
 void SetupDefaultFlexController();
+#endif
 
 
 #endif // FLEXCONTROLBUILDER_H

@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2008, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2008, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -9,6 +9,8 @@
 #ifdef _WIN32
 #pragma once
 #endif
+
+#ifdef TODO_UPDATE_SFMOBJECTS
 
 #include "movieobjects/dmerigconstraintoperators.h"
 #include "movieobjects/dmechannel.h"
@@ -50,5 +52,6 @@ public:
 	static bool HasRigComponents( CDmeAnimationSet *pAnimSet );
 
 };
+#endif
 
 #endif // SFMRIGUTILS_H

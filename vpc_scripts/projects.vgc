@@ -787,15 +787,15 @@ $Project "serverplugin_empty"
 	"utils/serverplugin_sample/serverplugin_empty.vpc" [$WINDOWS||$POSIX]
 }
 
-$Project "sfmgen"
-{
-	"utils/sfmgen/sfmgen.vpc" [$WINDOWS]
-}
+//$Project "sfmgen" // TODO_UPDATE_SFMOBJECTS 
+//{
+//	"utils/sfmgen/sfmgen.vpc" [$WINDOWS]
+//}
 
-$Project "sfmobjects"
-{
-	"sfmobjects/sfmobjects.vpc" [$WINDOWS]
-}
+//$Project "sfmobjects" // TODO_UPDATE_SFMOBJECTS 
+//{
+//	"sfmobjects/sfmobjects.vpc" [$WINDOWS]
+//}
 
 $Project "shadercompile_dll"
 {

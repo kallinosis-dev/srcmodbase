@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2008, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2008, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //=============================================================================
@@ -9,6 +9,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "movieobjects/dmechannel.h"
 #include "tier1/timeutils.h"
 
@@ -103,6 +104,6 @@ private:
 
 };
 //-------------------------------------------------------------------------------------------------
-
+#endif
 
 #endif // SFMANIMSETSCRIPTCONTEXT_H

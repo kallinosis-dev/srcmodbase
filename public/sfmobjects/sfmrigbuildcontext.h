@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2008, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2008, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -10,6 +10,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "movieobjects/dmerigconstraintoperators.h"
 #include "movieobjects/dmelog.h"
 #include "studio.h"
@@ -117,6 +118,6 @@ public:
 	CUtlVector< CDmeHandle< CDmeRigBaseConstraintOperator > >	m_Constraints;
 
 };
-
+#endif
 
 #endif // SFMRIGBUILDCONTEXT_H

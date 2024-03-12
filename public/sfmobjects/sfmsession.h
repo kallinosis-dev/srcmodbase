@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // A class representing session state for the SFM
 //
@@ -10,6 +10,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 
 #include "datamodel/dmehandle.h"
 #include "datamodel/dmelement.h"
@@ -29,7 +30,6 @@ class CDmeGameModel;
 class CDmeCamera;
 class CDmeDag;
 class CDmeAnimationSet;
-
 
 //-----------------------------------------------------------------------------
 // Camera creation paramaters
@@ -175,6 +175,7 @@ inline E* CSFMSession::GetSettingsElement( const char *pSettingName ) const
 	CDmElement *pSettings = GetSettings();
 	return pSettings ? pSettings->GetValueElement< E >( pSettingName ) : NULL;
 }
+#endif
 
 
 #endif // SFMSESSION_H

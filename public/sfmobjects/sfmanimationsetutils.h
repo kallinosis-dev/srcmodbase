@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // NOTE: This is a cut-and-paste hack job to get animation set construction
 // working from a commandline tool. It came from tools/ifm/createsfmanimation.cpp
@@ -13,6 +13,7 @@
 #pragma once
 #endif
 
+#ifdef TODO_UPDATE_SFMOBJECTS
 #include "tier1/UtlVector.h"
 #include "tier1/UtlDict.h"
 #include "tier1/UtlString.h"
@@ -226,6 +227,6 @@ void GetChannelsForControl( const CDmElement *pControl, CUtlVector< CDmeChannel*
 void GetControlChannelsForAnimSet( CDmeAnimationSet *pAnimSet, CUtlVector< CDmeChannel* > &channels );
 
 void ImportAnimation( CDmeChannelsClip *pImportedChannelsClip, CDmeAnimationSet *pAnimSet, int *pNumMatchingChannels, int *pNumMissingChannels, int *pNumSkippedChannels );
-
+#endif
 
 #endif // SFMANIMATIONSETUTILS_H

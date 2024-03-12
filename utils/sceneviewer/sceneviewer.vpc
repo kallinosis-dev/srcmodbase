@@ -51,7 +51,7 @@ $Project "Sceneviewer"
 		$Lib mathlib
 		$Lib matsys_controls
 		$Lib movieobjects
-		$Lib sfmobjects
+		//$Lib sfmobjects // TODO_UPDATE_SFMOBJECTS 
 		$Lib tier3
 		$Lib tier2
 		$Lib vgui_controls
