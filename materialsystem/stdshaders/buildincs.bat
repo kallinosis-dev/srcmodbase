@@ -31,9 +31,6 @@ nmake makefile.%2
 
 copyshaderincfiles.pl inclist.txt %1
 
-set SHADERINCPATH=vshtmp9/... fxctmp9/...
-p4autocheckout.pl inclist.txt "Shader Auto Checkout INC" . %SHADERINCPATH%
-
 goto end
 
 :error1

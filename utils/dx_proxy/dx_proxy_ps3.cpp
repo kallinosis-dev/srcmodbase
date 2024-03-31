@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Proxy for D3DX routines
 //
@@ -31,7 +31,7 @@ typedef void* LPD3DXCONSTANTTABLE;
 
 typedef unsigned int uint;
 typedef unsigned __int64 uint64;
-#include "../../public/ps3shaderoptimizer/ps3optimalschedulesfmt.h"
+#error Remove me: PS3 is not supported!
 
 const int g_nRandSched[] =
 {

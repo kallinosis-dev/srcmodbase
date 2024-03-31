@@ -2,8 +2,6 @@ use String::CRC32;
 BEGIN {use File::Basename; push @INC, dirname($0); }
 require "valve_perl_helpers.pl";
 
-$dynamic_compile = defined $ENV{"dynamic_shaders"} && $ENV{"dynamic_shaders"} != 0;
-
 $depnum = 0;
 $baseSourceDir = ".";
 
@@ -103,19 +101,11 @@ sub DoAsmShader
 	my $incfile = "";
 	if( $shadertype eq "fxc" || $shadertype eq "vsh" )
 	{
-		$incfile = $shadertype . "tmp9" . $g_tmpfolder . "\\$shaderbase.inc ";
+		$incfile = $shadertype . "tmp9_tmp" . "\\$shaderbase.inc ";
 	}
 
-	my $vcsfile = $shaderbase . $g_vcsext;
-	my $bWillCompileVcs = 1;
-	if( ( $shadertype eq "fxc") && $dynamic_compile )
-	{
-		$bWillCompileVcs = 0;
-	}
-	if( $shadercrcpass{$argstring} )
-	{
-		$bWillCompileVcs = 0;
-	}
+	my $vcsfile = $shaderbase . ".vcs"
+	my $bWillCompileVcs = ( $shadertype ne "fxc") && !$shadercrcpass{$argstring};
 
 	if( $bWillCompileVcs )
 	{
@@ -130,40 +120,16 @@ sub DoAsmShader
 		}
 	}
 	
-
-	my $x360switch = "";
-	my $ps3switch = "";
 	my $moreswitches = "";
 	if( !$bWillCompileVcs && $shadertype eq "fxc" )
 	{
 		$moreswitches .= "-novcs ";
 	}
-	if( $g_x360 )
-	{
-		$x360switch = "-x360";
-		
-		if( $bWillCompileVcs && ( $shaderbase =~ m/_ps20$/i ) )
-		{
-			$moreswitches .= "-novcs ";
-			$bWillCompileVcs = 0;
-		}
-	}
-	
-	if( $g_ps3 )
-	{
-		$ps3switch = "-ps3";
-		
-		if( $bWillCompileVcs && ( $shaderbase =~ m/_ps20$/i ) )
-		{
-			$moreswitches .= "-novcs ";
-			$bWillCompileVcs = 0;
-		}
-	}
 
 	# if we are psh and we are compiling the vcs, we don't need this rule.
 	if( !( $shadertype eq "psh" && !$bWillCompileVcs ) )
 	{
-		&output_makefile_line( "\tperl $g_SourceDir\\devtools\\bin\\" . $shadertype . "_prep.pl $moreswitches $x360switch $ps3switch -source \"$g_SourceDir\" $argstring\n") ;
+		&output_makefile_line( "\tperl $g_SourceDir\\devtools\\bin\\" . $shadertype . "_prep.pl $moreswitches -source \"$g_SourceDir\" $argstring\n") ;
 	}
 
 	if( $bWillCompileVcs )
@@ -183,11 +149,6 @@ if( scalar( @ARGV ) == 0 )
 	die "Usage updateshaders.pl shaderprojectbasename\n\tie: updateshaders.pl stdshaders_dx6\n";
 }
 
-$g_x360			= 0;
-$g_ps3			= 0;
-$g_tmpfolder	= "_tmp";
-$g_vcsext		= ".vcs";
-
 while( 1 )
 {
 	$inputbase = shift;
@@ -195,26 +156,6 @@ while( 1 )
 	if( $inputbase =~ m/-source/ )
 	{
 		$g_SourceDir = shift;
-	}
-	elsif( $inputbase =~ m/-x360/ )
-	{
-		$g_x360 = 1;
-		$g_tmpfolder = "_360_tmp";
-		$g_vcsext = ".360.vcs";
-	}
-	elsif( $inputbase =~ m/-ps3/ )
-	{
-		$g_ps3 = 1;
-		$g_tmpfolder = "_ps3_tmp";
-		$g_vcsext = ".ps3.vcs";
-	}
-	elsif( $inputbase =~ m/-execute/ )
-	{
-		$g_execute = 1;
-	}
-	elsif( $inputbase =~ m/-nv3x/ )
-	{
-		$nv3x = 1;
 	}
 	else
 	{
@@ -227,7 +168,6 @@ my @srcfiles = &LoadShaderListFile( $inputbase );
 open MAKEFILE, ">makefile\.$inputbase";
 open COPYFILE, ">makefile\.$inputbase\.copy";
 open INCLIST, ">inclist.txt";
-open VCSLIST, ">vcslist.txt";
 
 # make a default dependency that depends on all of the shaders.
 &output_makefile_line( "default: ") ;
@@ -239,28 +179,20 @@ foreach $shader ( @srcfiles )
 	if( $shadertype eq "fxc" || $shadertype eq "vsh" )
 	{
 		# We only generate inc files for fxc and vsh files.
-		my $incFileName = "$shadertype" . "tmp9" . $g_tmpfolder . "\\" . $shaderbase . "\.inc";
+		my $incFileName = "$shadertype" . "tmp9_tmp" . "\\" . $shaderbase . "\.inc";
 		&output_makefile_line( " $incFileName" );
 		&output_inclist_line( "$incFileName\n" );  
 	}
 
-	my $vcsfile = $shaderbase . $g_vcsext;
+	my $vcsfile = $shaderbase . ".vcs";
 
-	my $compilevcs = 1;
-	if( $shadertype eq "fxc" && $dynamic_compile )
-	{
-		$compilevcs = 0;
-	}
-	# Do not compile ps2.0 shaders on PS3/X360
-	if( ( $g_x360 || $g_ps3 ) && ( $shaderbase =~ m/_ps20$/i ) )
-	{
-		$compilevcs = 0;
-	}
+	my $compilevcs =  $shadertype ne "fxc";
+
 	if( $compilevcs )
 	{
-		my $vcsFileName = "..\\..\\..\\game\\platform\\shaders\\$shadertype\\$shaderbase" . $g_vcsext;
+		my $vcsFileName = "..\\..\\..\\game\\platform\\shaders\\$shadertype\\$shaderbase.vcs";
 		# We want to check for perforce operations even if the crc matches in the event that a file has been manually reverted and needs to be checked out again.
-		&output_vcslist_line( "$vcsFileName\n" );  
+		# &output_vcslist_line( "$vcsFileName\n" );  
 		$shadercrcpass{$shader} = &CheckCRCAgainstTarget( $shadersrc, $vcsFileName, 0 );
 		if( $shadercrcpass{$shader} )
 		{
@@ -288,7 +220,6 @@ foreach $shader ( @srcfiles )
 	}
 	&DoAsmShader( $shader );
 }
-close VCSLIST;
 close INCLIST;
 close COPYFILE;
 close MAKEFILE;
@@ -309,12 +240,6 @@ sub output_copyfile_line
 {
 	local ($_)=@_;
 	print COPYFILE $_;
-}
-
-sub output_vcslist_line
-{
-	local ($_)=@_;
-	print VCSLIST $_;
 }
 
 sub output_inclist_line
