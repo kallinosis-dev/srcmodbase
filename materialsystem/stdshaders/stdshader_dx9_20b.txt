@@ -299,8 +299,6 @@ worldtwotextureblend_ps2x.fxc
 
 WorldVertexAlpha_ps2x.fxc
 
-WorldVertexTransition.vsh
-WorldVertexTransition_Editor.psh
 writez_vs20.fxc
 
 vertexcolor_ps2x.fxc

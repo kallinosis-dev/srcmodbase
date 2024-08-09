@@ -143,7 +143,6 @@ $Project
 		$File	"$STDSHADERSDIR\worldimposter.cpp"							
 		$File	"$STDSHADERSDIR\worldtwotextureblend.cpp"
 		$File	"$STDSHADERSDIR\worldvertextransition.cpp"
-		$File	"$STDSHADERSDIR\worldvertextransition_dx8_helper.cpp"
 		$File	"$STDSHADERSDIR\writez_dx9.cpp"
 		$File	"$STDSHADERSDIR\writestencil_dx9.cpp"
 
@@ -200,7 +199,6 @@ $Project
 		$File	"$STDSHADERSDIR\volume_clouds_helper.h"
 		$File	"$STDSHADERSDIR\vortwarp_vs20_helper.h"
 		$File	"$STDSHADERSDIR\weapondecal_dx9_helper.h"
-		$File	"$STDSHADERSDIR\worldvertextransition_dx8_helper.h"
 	}
 
 	}
