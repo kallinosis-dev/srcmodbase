@@ -15,7 +15,7 @@ $Configuration
 	{
 		$PreprocessorDefinitions		"$BASE;VSCRIPT_DLL_EXPORT;LUA_MOD_CASE_INSENSITIVE" 
 		$PreprocessorDefinitions		"$BASE;MSVC" [$WINDOWS]
-		$AdditionalIncludeDirectories	"$BASE;.\languages\squirrel\include;.\languages\squirrel\sqplus;.\languages\lua\lua-5.1.4\src" [$OSXALL||$POSIX]
+		$AdditionalIncludeDirectories	"$BASE;.\languages\squirrel\include;.\languages\squirrel\sqplus;.\languages\lua\lua-5.1.4\src"
 
 	}
 

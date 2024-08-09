@@ -21,11 +21,7 @@
 #include <direct.h>
 #endif // _PS3
 
-#ifdef _HAS_EXCEPTIONS
-#undef _HAS_EXCEPTIONS
-#endif
 
-#define _HAS_EXCEPTIONS 0
 #include <string>
 
 #include "platform.h"
