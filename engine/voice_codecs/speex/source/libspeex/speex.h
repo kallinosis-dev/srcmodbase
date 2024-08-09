@@ -198,7 +198,7 @@ typedef struct SpeexMode {
    mode_query_func query;
    
    /** The name of the mode (you should not rely on this to identify the mode)*/
-   char *modeName;
+   char const* modeName;
 
    /**ID of the mode*/
    int modeID;

@@ -68,11 +68,11 @@ void speex_free (void *ptr);
 /** Speex wrapper for mem_move */
 void *speex_move (void *dest, void *src, int n);
 
-void speex_error(char *str);
+void speex_error(char const* str);
 
-void speex_warning(char *str);
+void speex_warning(char const* str);
 
-void speex_warning_int(char *str, int val);
+void speex_warning_int(char const* str, int val);
 
 void speex_rand_vec(float std, float *data, int len);
 
