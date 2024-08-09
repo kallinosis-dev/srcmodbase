@@ -74,7 +74,7 @@ $Project "stdshader_dbg"
 
 	$Folder	"Link Libraries"
 	{
-		$Lib	"$SRCDIR\dx9sdk\lib\d3dx9"			[$WINDOWS && !$GL]
+		$Lib	"$SRCDIR\dx9sdk\lib\$PLATFORM\d3dx9"			[$WINDOWS && !$GL]
 		$Lib	"mathlib"		[$WINDOWS]
 		$Lib	"shaderlib"		[$WINDOWS]
 	}

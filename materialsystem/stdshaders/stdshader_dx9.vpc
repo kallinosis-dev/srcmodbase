@@ -60,7 +60,7 @@ $Project "stdshader_dx9"
 	{
 		$Lib mathlib
 		$Lib shaderlib
-		$Lib	"$SRCDIR\dx9sdk\lib\d3dx9.lib"	[$WINDOWS && !$GL]
+		$Lib "$SRCDIR\dx9sdk\lib\$PLATFORM\d3dx9"	[$WINDOWS && !$GL]
 	}
 
 
