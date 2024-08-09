@@ -242,11 +242,6 @@ $Project "engine"
 	"engine/engine.vpc" [$WINDOWS || $X360 || $DEDICATED || $PS3 || $POSIX]
 }
 
-$Project "engine_ds"
-{
-	"engine_ds/engine_ds.vpc" [$WINDOWS||$LINUX]
-}
-
 $Project "ep2_deathmap"
 {
 	"devtools/ep2_deathmap/ep2_deathmap.vpc" [$WINDOWS]

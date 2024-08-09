@@ -3,10 +3,1175 @@
 //
 //	Project Script
 //-----------------------------------------------------------------------------
+$macro SRCDIR		".."
+$Macro OUTBINDIR	"$SRCDIR\..\game\bin"
+// Macros cannot start with PS3 because that is a conditional. See CVPC::ResolveMacrosInString for the gory details.
+//$Macro PS3CELPDIR	$SRCDIR\ps3sdk\celp_pc-v0_2_1
+$Macro GENERATED_PROTO_DIR	"generated_proto"
 
-$macro EPROJ "engine"
-$macro ESRCDIR "."
-$macro EXTRADEFINES ;
+$include "$SRCDIR\vpc_scripts\source_dll_base.vpc" 
+$include "$SRCDIR\vpc_scripts\protobuf_builder.vpc"
+$include "$SRCDIR\vpc_scripts\netmessages_include.vpc"
 
-$include "engine_inc.vpc"
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.;audio;audio\private;audio\private\snd_op_sys;audio\public;$SRCDIR\thirdparty\quickhull;$SRCDIR\thirdparty\cryptopp"
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\dx9sdk\include" [$WINDOWS]
+		$PreprocessorDefinitions	"$BASE;USE_CONVARS;VOICE_OVER_IP;BUMPMAP;__USEA3D;_ADD_EAX_;ENGINE_DLL;VERSION_SAFE_STEAM_API_INTERFACES;PROTECTED_THINGS_ENABLE;USE_BREAKPAD_HANDLER" 
+		$PreprocessorDefinitions	"$BASE;fopen=dont_use_fopen" [!$POSIX]
+		$PreprocessorDefinitions	"$BASE;DEDICATED;SWDS;NO_BINK" [$DEDICATED]
+	}
+	
+	$Compiler [$OSXALL]
+	{
+	//is this still needed?
+	//	$AdditionalLibraryDirectories	"$BASE;$SRCDIR\lib\$PLATFORM\MacOSX10.6.sdk"
+	}
 
+	$Linker
+	{
+		$AdditionalDependencies			"$BASE dinput8.lib winmm.lib wsock32.lib ws2_32.lib wininet.lib vfw32.lib Rpcrt4.lib Iphlpapi.lib imm32.lib" [$WINDOWS]
+		$AdditionalLibraryDirectories	"$BASE;$SRCDIR\lib\common\vc7;$SRCDIR\dx9sdk\lib" [$WINDOWS]
+		$SystemFrameworks				"Carbon;AppKit;OpenAL;CoreAudio;AudioToolbox;SystemConfiguration;Quicktime;AudioUnit" [$OSXALL]
+		$SystemLibraries				"iconv" [$OSXALL]
+		$SystemLibraries				"SDL2;rt;openal" [$LINUXALL && !$DEDICATED]
+		$GCC_ExtraLinkerFlags			"-L/usr/lib32 -L/usr/lib" [$LINUXALL]
+		$AdditionalOptions				"$BASE /nodefaultlib:msvcrt.lib" [$WINDOWS]
+	}
+}
+
+$Project "engine"
+{
+	$Folder "Client"
+	{
+		$File	"client_pch.cpp" [!$DEDICATED]
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+					$Create/UsePCHThroughFile		"client_pch.h"
+					$PrecompiledHeaderFile			"$(IntDir)/client_pch.pch"
+				}
+			}
+		}
+
+		$File	"movieplayer_matchframework.cpp" [$X360 || $PS3]
+		$File	"cl_rcon.cpp" 		[!$DEDICATED]
+		$File	"rpt_engine.cpp" 	[!$DEDICATED]
+		$File	"cl_steamauth.cpp" [!$DEDICATED]
+		$File	"clientframe.cpp"
+		$File	"decal_clip.cpp"
+		$File	"demofile.cpp"
+		$File	"demostreamhttp.cpp"
+		$File	"demostream.cpp"
+		$File	"demobuffer.cpp"
+		$File	"DevShotGenerator.cpp"
+		$File	"OcclusionSystem.cpp"
+		$File	"tmessage.cpp"
+		$File	"r_efx.cpp" 	[!$DEDICATED]
+		$File	"view.cpp" 	[!$DEDICATED]
+		$File	"$SRCDIR\game\shared\cstrike15\dlchelper.h"
+
+		$File	"baseclientstate.cpp"			\
+				"cbenchmark.cpp"				[!$DEDICATED]\
+				"cdll_engine_int.cpp"  		[!$DEDICATED]\
+				"cl_main.cpp"					[!$DEDICATED]\
+				"cl_demo.cpp"					[!$DEDICATED]\
+				"cl_broadcast.cpp"					[!$DEDICATED]\
+				"cl_null.cpp"					[$DEDICATED]\
+				"cl_demoaction.cpp"			[!$DEDICATED]\
+				"cl_demoaction_types.cpp"		[!$DEDICATED]\
+				"cl_demoactioneditors.cpp"		[!$DEDICATED]\
+				"cl_demoactionmanager.cpp"		[!$DEDICATED]\
+				"cl_demoeditorpanel.cpp"		[!$DEDICATED]\
+				"cl_demosmootherpanel.cpp"		[!$DEDICATED]\
+				"cl_demouipanel.cpp"			[!$DEDICATED]\
+				"cl_foguipanel.cpp"			[!$DEDICATED]\
+				"cl_txviewpanel.cpp"			[!$DEDICATED]\
+				"cl_entityreport.cpp"			[!$DEDICATED]\
+				"cl_ents_parse.cpp"			[!$DEDICATED]\
+				"cl_localnetworkbackdoor.cpp"	[!$DEDICATED]\
+				"cl_parse_event.cpp"			[!$DEDICATED]\
+				"cl_pluginhelpers.cpp"			[!$DEDICATED]\
+				"cl_pred.cpp"					[!$DEDICATED]\
+				"cl_splitscreen.cpp"			[!$DEDICATED]\
+				"cl_texturelistpanel.cpp"		[!$DEDICATED]\
+				"client.cpp"					[!$DEDICATED]\
+				"colorcorrectionpanel.cpp"		[!$DEDICATED]\
+				"console.cpp"					
+  		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+					$Create/UsePCHThroughFile		"client_pch.h"
+					$PrecompiledHeaderFile			"$(IntDir)/client_pch.pch"
+				}
+			}
+		}
+		$File	"render_pch.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+					$Create/UsePCHThroughFile		"render_pch.h"
+					$PrecompiledHeaderFile			"$(IntDir)/render_pch.pch"
+				}
+			}
+		}
+		
+		$File	"buildcubemaps.cpp"		[!$DEDICATED]\
+				"buildmodelforworld.cpp"	[!$DEDICATED]\
+				"debug_leafvis.cpp"		[!$DEDICATED]\
+				"debugoverlay.cpp"			[!$DEDICATED]\
+				"decals.cpp"				\
+				"disp.cpp"					\
+				"disp_interface.cpp"		\
+				"disp_mapload.cpp"			\
+				"gl_draw.cpp"				\
+				"gl_rsurf.cpp"				\
+				"brushbatchrender.cpp"		[!$DEDICATED]\
+				"gl_shader.cpp"			\
+				"gl_drawlights.cpp"		[!$DEDICATED]\
+				"gl_lightmap.cpp"			[!$DEDICATED]\
+				"gl_matsysiface.cpp"		[!$DEDICATED]\
+				"gl_rlight.cpp"			[!$DEDICATED]\
+				"gl_rmain.cpp"				[!$DEDICATED]\
+				"gl_rmisc.cpp"				[!$DEDICATED]\
+				"gl_screen.cpp"			[!$DEDICATED]\
+				"gl_warp.cpp"				[!$DEDICATED]\
+				"l_studio.cpp"				\
+				"matsys_interface.cpp"		\
+				"modelloader.cpp"			\
+				"Overlay.cpp"				[!$DEDICATED]\
+				"r_areaportal.cpp"			[!$DEDICATED]\
+				"r_decal.cpp"				\
+				"r_linefile.cpp"			[!$DEDICATED]\
+				"shadowmgr.cpp"			[!$DEDICATED]
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+					$Create/UsePCHThroughFile		"render_pch.h"
+					$PrecompiledHeaderFile			"$(IntDir)/render_pch.pch"
+				}
+			}
+		}
+	}
+	
+	$Folder "Server"
+	{
+		$File	"server_pch.cpp"
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+					$Create/UsePCHThroughFile		server_pch.h
+					$PrecompiledHeaderFile			"$(IntDir)/server_pch.pch"
+				}
+			}
+		}
+
+		$File	"sv_ipratelimit.cpp"
+		$File	"sv_rcon.cpp"
+		$File	"sv_steamauth.cpp"
+		$File	"sv_uploaddata.cpp"
+		$File	"sv_uploadgamestats.cpp"
+
+		$File	"baseclient.cpp"				\
+				"sv_main.cpp"					\
+				"sv_client.cpp"				\
+				"sv_ents_write.cpp"			\
+				"sv_filter.cpp"				\
+				"sv_framesnapshot.cpp"			\
+				"sv_log.cpp"					\
+				"sv_master.cpp"				\
+				"sv_packedentities.cpp"		\
+				"sv_plugin.cpp"				\
+				"sv_precache.cpp"				\
+				"sv_redirect.cpp"				\
+				"sv_remoteaccess.cpp"			\		
+				"vengineserver_impl.cpp"
+  		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+					$Create/UsePCHThroughFile		server_pch.h
+					$PrecompiledHeaderFile			"$(IntDir)/server_pch.pch"
+				}
+			}
+		}
+	}
+
+	$Folder	"Source Files"
+	{
+		$File	"baseautocompletefilelist.cpp"
+		$File	"baseserver.cpp"
+		$File	"bitbuf_errorhandler.cpp"
+		$File	"blackbox.cpp"		
+		$File	"$SRCDIR\public\blockingudpsocket.cpp"
+		$File	"$SRCDIR\public\bsptreedata.cpp"
+		$File	"$SRCDIR\public\builddisp.cpp"
+		$File	"buildnum.cpp"
+		$File	"changeframelist.cpp"
+		$File	"checksum_engine.cpp"
+		$File	"clockdriftmgr.cpp"
+		$File	"cl_bounded_cvars.cpp" [!$DEDICATED]
+		$File	"cmd.cpp"
+		$File	"cmodel.cpp"
+		$File	"cmodel_bsp.cpp"
+		$File	"cmodel_disp.cpp"
+		$File	"$SRCDIR\public\collisionutils.cpp"
+		$File	"common.cpp"
+		$File	"$SRCDIR\public\crtmemdebug.cpp"
+		$File	"cvar.cpp"
+		$File	"$SRCDIR\public\disp_common.cpp"
+		$File	"disp_defs.cpp"
+		$File	"disp_helpers.cpp"
+		$File	"$SRCDIR\public\disp_powerinfo.cpp"
+		$File	"$SRCDIR\public\dispcoll_common.cpp"
+		$File	"DownloadListGenerator.cpp"
+		$File	"downloadthread.cpp"
+		$File	"dt.cpp"
+		$File	"dt_common_eng.cpp"
+		$File	"dt_encode.cpp"
+		$File	"dt_instrumentation.cpp"
+		$File	"dt_instrumentation_server.cpp"
+		$File	"dt_localtransfer.cpp"
+		$File	"$SRCDIR\public\dt_recv.cpp"
+		$File	"dt_recv_decoder.cpp"
+		$File	"dt_recv_eng.cpp"
+		$File	"$SRCDIR\public\dt_send.cpp"
+		$File	"dt_send_eng.cpp"
+		$File	"dt_stack.cpp"
+		$File	"dt_test.cpp"
+		$File	"$SRCDIR\public\dt_utlvector_common.cpp"
+		$File	"$SRCDIR\public\dt_utlvector_recv.cpp"
+		$File	"$SRCDIR\public\dt_utlvector_send.cpp"
+		$File	"enginesingleuserfilter.cpp"
+		$File	"enginestats.cpp"
+		$File	"enginethreads.cpp"
+		$File	"enginetrace.cpp"
+		$File	"filesystem_engine.cpp"
+		$File	"$SRCDIR\public\filesystem_helpers.cpp"
+		$File	"$SRCDIR\public\filesystem_init.cpp"
+		$File	"filetransfermgr.cpp"
+		$File	"GameEventManager.cpp"
+		$File	"GameEventManagerOld.cpp"
+		$File	"gameeventtransmitter.cpp"
+		$File	"gametrace_engine.cpp"
+		$File	"hltvclient.cpp"
+		$File	"hltvclientstate.cpp"
+		$File	"hltvdemo.cpp"
+		$File	"hltvbroadcast.cpp"
+		$File	"hltvserver.cpp"
+		$File	"hltvtest.cpp"
+		$File	"host.cpp"
+		$File	"host_cmd.cpp"
+		$File	"host_listmaps.cpp"
+		$File	"host_phonehome.cpp"
+		$File	"host_state.cpp"
+		$File	"imagepacker.cpp"
+		$File	"initmathlib.cpp"
+		$File	"$SRCDIR\common\language.cpp"
+		$File	"LocalNetworkBackdoor.cpp"
+		$File	"LoadScreenUpdate.cpp" [!$DEDICATED]
+		$File	"$SRCDIR\public\lumpfiles.cpp"
+		$File	"MapReslistGenerator.cpp"
+		$File	"materialproxyfactory.cpp"
+		$File	"mem_fgets.cpp"
+		$File	"mod_vis.cpp"
+		$File	"ModelInfo.cpp"
+		$File   "netconsole.cpp"
+		$File	"net_chan.cpp"
+		$File	"net_support.cpp"
+		$File	"net_synctags.cpp"
+		$File	"net_ws.cpp"
+		$File	"net_ws_queued_packet_sender.cpp"
+		$File	"net_steamsocketmgr.cpp"
+		$File	"$SRCDIR\common\netmessages.cpp"
+		$File	"$SRCDIR\common\steamid.cpp"
+		$File	"networkstringtable.cpp"
+		$File	"NetworkStringTableItem.cpp"
+		$File	"networkstringtableserver.cpp"
+		$File	"$SRCDIR\public\networkvar.cpp"
+		$File	"packed_entity.cpp"
+		$File	"pure_server.cpp"
+		$File	"pr_edict.cpp"
+		$File	"precache.cpp"
+		$File	"quakedef.cpp"
+		$File	"randomstream.cpp"
+		$File	"$SRCDIR\common\randoverride.cpp"
+		$File	"$SRCDIR\public\registry.cpp"
+		$File	"replay.cpp"
+		$File	"replayclient.cpp"
+		$File	"replayhistorymanager.cpp"
+		$File	"replaydemo.cpp"
+		$File	"replayserver.cpp"
+		$File	"$SRCDIR\public\sentence.cpp"
+		$File	"singleplayersharedmemory.cpp"
+		$File	"sound_shared.cpp"
+		$File	"spatialpartition.cpp"
+		$File	"staticpropmgr.cpp"
+		$File	"status.cpp"
+		$File	"$SRCDIR\public\studio.cpp"
+		$File	"sys_dll.cpp"
+		$File	"sys_dll2.cpp"
+		$File	"sys_engine.cpp"
+		$File	"sys_mainwind.cpp" 	[!$DEDICATED]
+		$File	"sys_linuxwind.cpp" 	[$LINUX]
+		$File	"testscriptmgr.cpp"
+		$File	"traceinit.cpp"
+		$File	"$SRCDIR\public\vallocator.cpp"
+		$File	"voiceserver_impl.cpp"
+		$File	"vprof_engine.cpp"
+		$File	"vprof_record.cpp"
+		$File	"world.cpp"
+		$File	"$SRCDIR\public\XZip.cpp" 
+		$File	"$SRCDIR\public\XUnzip.cpp"
+		$File	"zone.cpp"
+		$File	"bugreporter.cpp" 	[!$DEDICATED]
+		$File	"cheatcodes.cpp"
+		$File	"download.cpp"
+		$File	"$SRCDIR\public\editor_sendcommand.cpp"
+		$File	"host_saverestore.cpp" [!$DEDICATED]
+		$File	"keys.cpp"
+		$File	"lightcache.cpp" [!$DEDICATED]
+		$File	"networkstringtableclient.cpp"
+		$File	"saverestore_filesystem_passthrough.cpp"  [!$DEDICATED]
+		$File	"saverestore_filesystem.cpp"  [!$DEDICATED]
+		$File	"$SRCDIR\public\scratchpad3d.cpp"
+		$File	"servermsghandler.cpp"
+		$File	"sys_getmodes.cpp" [!$DEDICATED]
+		$File	"vgui_askconnectpanel.cpp" [!$DEDICATED]
+		$File	"vgui_watermark.cpp" [!$DEDICATED]
+		$File	"$SRCDIR\common\SourceAppInfo.cpp"
+		$File	"ipc_console.cpp"					[$WINDOWS]
+		$File	"$SRCDIR\engine\paint.cpp"
+		$File	"$SRCDIR\public\phonemeconverter.cpp"
+	}
+	
+	$Folder	"Audio"
+	{
+		$File	"snd_io.cpp"
+		$File	"EngineSoundServer.cpp"
+		$File	"EngineSoundClient.cpp" [!$DEDICATED]
+		$File	"engsoundservice.cpp"	  [!$DEDICATED]
+		$File   "audio\private\voice_wavefile.cpp"
+		$File	"audio\private\MPAFile.cpp"			[!$DEDICATED]
+		$File	"audio\private\MPAHeader.cpp"		[!$DEDICATED]
+		$File	"audio\private\snd_posix.cpp" [$POSIX]
+		$File   "audio\private\windows_audio.cpp" [$WINDOWS]
+
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$AdditionalIncludeDirectories	"."
+				}
+			}
+		}
+
+		
+		$File	"audio\audio_pch.cpp"	[!$DEDICATED]
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
+					$Create/UsePCHThroughFile		"audio_pch.h"
+					$PrecompiledHeaderFile			"$(IntDir)/audio_pch.pch"
+					$AdditionalIncludeDirectories	"$BASE;$SRCDIR\engine\audio\public;$SRCDIR\engine\audio\private;$SRCDIR\audio\private\snd_op_sys"
+				}
+			}
+		}
+			
+		// precompiled header section: common audio files
+		$File	"audio\private\vox.cpp"										\
+				"audio\private\snd_dev_common.cpp"	 							[!$DEDICATED]\
+				"audio\private\snd_dma.cpp"									[!$DEDICATED]\
+				"audio\private\snd_mixgroups.cpp"								[!$DEDICATED]\
+				"audio\private\snd_dsp.cpp"									[!$DEDICATED]\
+				"audio\private\snd_mix.cpp"									[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_system.cpp" 						[!$DEDICATED]\ 
+				"audio\private\snd_op_sys\sos_entry_match_system.cpp"			[!$DEDICATED]\ 
+				"audio\private\snd_op_sys\sos_op.cpp"							[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_block_entry.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_convar.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_dashboard.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_delta.cpp"					[!$DEDICATED]\				
+				"audio\private\snd_op_sys\sos_op_distant_dsp.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_entry_time.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_entity_info.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_falloff.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_filters.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_iterate_merge_speakers.cpp" 	[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_map_name.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_math.cpp"						[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_mixer.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_mixlayer.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_occlusion.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_opvar.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_output.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_platform.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_player_info.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_pos_vec8.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_source_info.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_spatialize.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_start_entry.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_stop_entry.cpp"				[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_sys_time.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_tracks.cpp"					[!$DEDICATED]\
+				"audio\private\snd_op_sys\sos_op_util.cpp"						[!$DEDICATED]\
+				"audio\private\snd_sentence_mixer.cpp"							[!$DEDICATED]\
+				"audio\private\snd_wave_data.cpp"								[!$DEDICATED]\
+				"audio\private\snd_wave_mixer.cpp"								[!$DEDICATED]\
+				"audio\private\snd_wave_mixer_adpcm.cpp"						[!$DEDICATED]\
+				"audio\private\snd_wave_source.cpp"							[!$DEDICATED]\
+				"audio\private\snd_wave_temp.cpp"								[!$DEDICATED]\
+				"audio\private\snd_win.cpp"									[!$DEDICATED]\
+				"audio\private\voice_gain.cpp"									[!$DEDICATED]									
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+					$Create/UsePCHThroughFile		"audio_pch.h"
+					$PrecompiledHeaderFile			"$(IntDir)/audio_pch.pch"
+				}
+			}
+		}
+		
+		// WIN32 only audio files
+		$File	"audio\private\snd_dev_direct.cpp"					[$WINDOWS] \
+				"audio\private\snd_mp3_source.cpp"					[$WINDOWS||$OSXALL||($LINUXALL&&!$DEDICATED)] \
+				"audio\private\snd_wave_mixer_mp3.cpp"				[$WINDOWS||$OSXALL||($LINUXALL&&!$DEDICATED)] \
+				"audio\private\VBRHeader.cpp"						[!$DEDICATED] \
+				"audio\private\voice.cpp"							[!$DEDICATED] \
+				"audio\private\voice_mixer_controls.cpp"			[$WINDOWS] \
+				"audio\private\voice_record_dsound.cpp"			[$WINDOWS] \
+				"audio\private\voice_sound_engine_interface.cpp" [!$DEDICATED]
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+					$Create/UsePCHThroughFile		"audio_pch.h"
+					$PrecompiledHeaderFile			"$(IntDir)/audio_pch.pch"
+				}
+			}
+		}
+
+		$File "audio\private\snd_stubs.cpp"
+		$File "audio\private\voice_mixer_controls_openal.cpp"	[$OSXALL||($LINUXALL&&!$DEDICATED)]
+		$File "audio\private\voice_record_openal.cpp"  [$OSXALL||($LINUXALL&&!$DEDICATED)]
+		$File "audio\private\voice_record_mac_audioqueue.cpp"	[$OSXALL]
+	
+				
+		$Folder	"Header Files"
+		{
+			$File	"audio\public\ivoicecodec.h"
+			$File	"audio\public\ivoicerecord.h"
+			$File	"audio\public\snd_audio_source.h"
+			$File	"audio\public\snd_device.h"
+			$File	"audio\public\snd_io.h"
+			$File	"audio\public\sound.h"
+			$File	"audio\public\soundservice.h"
+			$File	"audio\public\voice.h"
+			$File	"audio\public\vox.h"
+			$File	"audio\private\MPAFile.h"							[$WINDOWS]
+			$File	"audio\private\MPAHeader.h"						[$WINDOWS]
+			$File	"audio\private\VBRHeader.h"						[$WINDOWS]
+			$File	"audio\private\circularbuffer.h"
+			$File	"audio\private\eax.h"
+			$File	"audio\private\snd_channels.h"
+			$File	"audio\private\snd_convars.h"
+			$File	"audio\private\snd_dev_common.h"
+			$File	"audio\private\snd_dev_direct.h"					[$WINDOWS]
+			$File	"audio\private\snd_dev_wave.h"						[$WINDOWS]
+			$File	"audio\private\snd_dma.h"
+			$File	"audio\private\snd_env_fx.h"
+			$File	"audio\private\snd_fixedint.h"
+			$File	"audio\private\snd_mix_buf.h"
+			$File	"audio\private\snd_op_sys\sos_entry_match_system.h"
+			$File	"audio\private\snd_op_sys\sos_op.h"
+			$File	"audio\private\snd_op_sys\sos_op_block_entry.h"
+			$File	"audio\private\snd_op_sys\sos_op_convar.h"
+			$File	"audio\private\snd_op_sys\sos_op_dashboard.h"
+			$File	"audio\private\snd_op_sys\sos_op_delta.h"
+			$File	"audio\private\snd_op_sys\sos_op_distant_dsp.h"
+			$File	"audio\private\snd_op_sys\sos_op_entry_time.h"
+			$File	"audio\private\snd_op_sys\sos_op_entity_info.h"
+			$File	"audio\private\snd_op_sys\sos_op_falloff.h"
+			$File	"audio\private\snd_op_sys\sos_op_filters.h"
+			$File	"audio\private\snd_op_sys\sos_op_iterate_merge_speakers.h"
+			$File	"audio\private\snd_op_sys\sos_op_map_name.h"			
+			$File	"audio\private\snd_op_sys\sos_op_math.h"
+			$File	"audio\private\snd_op_sys\sos_op_mixer.h"
+			$File	"audio\private\snd_op_sys\sos_op_mixlayer.h"			
+			$File	"audio\private\snd_op_sys\sos_op_occlusion.h"
+			$File	"audio\private\snd_op_sys\sos_op_opvar.h"
+			$File	"audio\private\snd_op_sys\sos_op_output.h"
+			$File	"audio\private\snd_op_sys\sos_op_platform.h"
+			$File	"audio\private\snd_op_sys\sos_op_player_info.h"
+			$File	"audio\private\snd_op_sys\sos_op_source_info.h"
+			$File	"audio\private\snd_op_sys\sos_op_pos_vec8.h"
+			$File	"audio\private\snd_op_sys\sos_op_spatialize.h"
+			$File	"audio\private\snd_op_sys\sos_op_start_entry.h"
+			$File	"audio\private\snd_op_sys\sos_op_stop_entry.h"
+			$File	"audio\private\snd_op_sys\sos_op_sys_time.h"
+			$File	"audio\private\snd_op_sys\sos_op_tracks.h"
+			$File	"audio\private\snd_op_sys\sos_op_util.h"
+			$File	"audio\private\snd_op_sys\sos_system.h"
+			$File	"audio\private\snd_sfx.h"
+			$File	"audio\private\snd_stubs.h"
+			$File	"audio\private\snd_wave_mixer.h"
+			$File	"audio\private\snd_wave_mixer_adpcm.h"
+			$File	"audio\private\snd_wave_mixer_xma.h"
+			$File	"audio\private\snd_wave_mixer_ps3_mp3.h"
+			$File	"audio\private\snd_wave_mixer_private.h"
+			$File	"audio\private\snd_wave_source.h"
+			$File	"audio\private\snd_wave_temp.h"
+			$File	"audio\private\sound_private.h"
+			$File	"audio\private\voice_gain.h"
+			$File	"audio\private\voice_mixer_controls.h"
+			$File	"audio\private\voice_sound_engine_interface.h"
+			$File	"audio\private\voice_wavefile.h"
+			$File	"audio\private\vox_private.h"
+		}
+	}
+
+	$Folder	"VGUI Panels" [!$DEDICATED]
+	{
+		// public file, no pch
+		$File	"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+		$File	"$SRCDIR\common\vgui\vgui_basebudgetpanel.cpp"
+		$File	"$SRCDIR\common\vgui\vgui_budgetbargraphpanel.cpp"
+		$File	"$SRCDIR\common\vgui\vgui_budgethistorypanel.cpp"
+		$File	"$SRCDIR\common\vgui\vgui_budgetpanelshared.cpp"
+		
+		$File	"perfuipanel.cpp"										\
+				"vgui_basepanel.cpp"									\
+				"vgui_baseui_interface.cpp"								\
+				"vgui_budgetpanel.cpp"									\
+				"vgui_DebugSystemPanel.cpp"								\
+				"vgui_drawtreepanel.cpp"								\
+				"vgui_helpers.cpp"										\
+				"vgui_texturebudgetpanel.cpp"							\
+				"vgui_vprofgraphpanel.cpp"								\
+				"vgui_vprofpanel.cpp"									
+		{
+			$Configuration
+			{
+				$Compiler
+				{
+					$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
+					$Create/UsePCHThroughFile		"client_pch.h"
+					$PrecompiledHeaderFile			"$(IntDir)/client_pch.pch"
+				}
+			}
+		}
+
+		$File	"vgui_budgetpanel.h"
+		$File	"$SRCDIR\common\vgui\vgui_budgetpanelshared.h"
+		$File	"vgui_texturebudgetpanel.h"
+		$File	"vgui_vprofgraphpanel.h"
+		$File	"vgui_vprofpanel.h"
+
+		$File	"$SRCDIR\common\vgui\vgui_basebudgetpanel.h"
+		$File	"vgui_baseui_interface.h"
+		$File	"$SRCDIR\common\vgui\vgui_budgetbargraphpanel.h"
+		$File	"$SRCDIR\common\vgui\vgui_budgethistorypanel.h"
+
+	}
+
+	$Folder	"Tools Framework"
+	{
+		$File	"$SRCDIR\public\toolframework\iclientenginetools.h"
+		$File	"$SRCDIR\public\toolframework\ienginetool.h"
+		$File	"$SRCDIR\public\toolframework\iserverenginetools.h"
+		$File	"$SRCDIR\public\toolframework\itooldictionary.h"
+		$File	"$SRCDIR\public\toolframework\itoolentity.h"
+		$File	"$SRCDIR\public\toolframework\itoolframework.h"
+		$File	"$SRCDIR\public\toolframework\itoolsystem.h"
+		$File	"enginetool.cpp" [!$DEDICATED]
+		$File	"toolframework.cpp" [!$DEDICATED]
+	}
+
+	$Folder	"Header Files"
+	{
+		$File	"baseclient.h"
+		$File	"baseclientstate.h"
+		$File	"baseserver.h"
+		$File	"bitbuf_errorhandler.h"
+		$File	"blackbox.h"		
+		$File	"$SRCDIR\public\bsptreedata.h"
+		$File	"cbenchmark.h"
+		$File	"cdll_engine_int.h"
+		$File	"changeframelist.h"
+		$File	"cheatcodes.h"
+		$File	"checksum_engine.h"
+		$File	"cl_demo.h"
+		$File	"cl_broadcast.h"
+		$File	"cl_entityreport.h"
+		$File	"cl_ents_parse.h"
+		$File	"cl_localnetworkbackdoor.h"
+		$File	"cl_main.h"
+		$File	"cl_parse_event.h"
+		$File	"cl_pluginhelpers.h"
+		$File	"cl_pred.h"
+		$File	"cl_splitscreen.h"
+		$File	"cl_rcon.h"
+		$File	"cl_steamauth.h"
+		$File	"cl_texturelistpanel.h"
+		$File	"client.h"
+		$File	"$SRCDIR\public\client_render_handle.h"
+		$File	"clientframe.h"
+		$File	"clockdriftmgr.h"
+		$File	"cmd.h"
+		$File	"cmodel_engine.h"
+		$File	"cmodel_private.h"
+		$File	"$SRCDIR\public\collisionutils.h"
+		$File	"common.h"
+		$File	"$SRCDIR\public\mathlib\compressed_light_cube.h"
+		$File	"conprint.h"
+		$File	"console.h"
+		$File	"cvar.h"
+		$File	"debug_leafvis.h"
+		$File	"debugoverlay.h"
+		$File	"decal.h"
+		$File	"decal_clip.h"
+		$File	"decal_private.h"
+		$File	"demo.h"
+		$File	"broadcast.h"
+		$File	"demofile.h"
+		$File	"demostream.h"
+		$File	"demostreamhttp.h"
+		$File	"demobuffer.h"
+		$File	"DevShotGenerator.h"
+		$File	"disp.h"
+		$File	"$SRCDIR\public\disp_common.h"
+		$File	"disp_defs.h"
+		$File	"disp_helpers.h"
+		$File	"$SRCDIR\public\disp_powerinfo.h"
+		$File	"$SRCDIR\public\disp_tesselate.h"
+		$File	"$SRCDIR\public\dispcoll_common.h"
+		$File	"dbginput.h"
+		$File	"dispnode.h"
+		$File	"download.h"
+		$File	"download_internal.h"
+		$File	"DownloadListGenerator.h"
+		$File	"draw.h"
+		$File	"dt.h"
+		$File	"$SRCDIR\public\dt_common.h"
+		$File	"dt_encode.h"
+		$File	"dt_instrumentation.h"
+		$File	"dt_instrumentation_server.h"
+		$File	"dt_localtransfer.h"
+		$File	"$SRCDIR\public\dt_recv.h"
+		$File	"dt_recv_decoder.h"
+		$File	"dt_recv_eng.h"
+		$File	"$SRCDIR\public\dt_send.h"
+		$File	"dt_send_eng.h"
+		$File	"dt_stack.h"
+		$File	"dt_test.h"
+		$File	"$SRCDIR\public\dt_utlvector_common.h"
+		$File	"$SRCDIR\public\engine_hlds_api.h"
+		$File	"enginesingleuserfilter.h"
+		$File	"EngineSoundInternal.h"
+		$File	"enginestats.h"
+		$File	"enginetrace.h"
+		$File	"ents_shared.h"
+		$File	"$SRCDIR\public\filesystem.h"
+		$File	"filesystem_engine.h"
+		$File	"filetransfermgr.h"
+		$File	"ipuserfilter.h"
+		$File	"$SRCDIR\public\tier1\fmtstr.h"
+		$File	"framesnapshot.h"
+		$File	"GameEventManager.h"
+		$File	"gameeventtransmitter.h"
+		$File	"getintersectingsurfaces_struct.h"
+		$File	"gl_cvars.h"
+		$File	"gl_drawlights.h"
+		$File	"gl_lightmap.h"
+		$File	"gl_matsysiface.h"
+		$File	"gl_model.h"
+		$File	"gl_model_private.h"
+		$File	"gl_rmain.h"
+		$File	"gl_rsurf.h"
+		$File	"brushbatchrender.h"
+		$File	"gl_shader.h"
+		$File	"gl_water.h"
+		$File	"hltvclient.h"
+		$File	"hltvclientstate.h"
+		$File	"hltvdemo.h"
+		$File	"hltvbroadcast.h"
+		$File	"hltvserver.h"
+		$File	"hltvtest.h"
+		$File	"host.h"
+		$File	"host_cmd.h"
+		$File	"host_jmp.h"
+		$File	"host_saverestore.h"
+		$File	"csaverestore.h"
+		$File	"host_state.h"
+		$File	"$SRCDIR\public\iclient.h"
+		$File	"$SRCDIR\public\icliententity.h"
+		$File	"icolorcorrectiontools.h"
+		$File	"$SRCDIR\public\materialsystem\idebugtextureinfo.h"
+		$File	"$SRCDIR\public\idedicatedexports.h"
+		$File	"idispinfo.h"
+		$File	"$SRCDIR\public\engine\IEngineSound.h"
+		$File	"ienginetoolinternal.h"
+		$File	"$SRCDIR\public\engine\IEngineTrace.h"
+		$File	"$SRCDIR\public\ihltvdirector.h"
+		$File	"imagepacker.h"
+		$File	"$SRCDIR\public\inetchannel.h"
+		$File	"$SRCDIR\public\inetmsghandler.h"
+		$File	"$SRCDIR\public\inetwork.h"
+		$File	"$SRCDIR\public\iscratchpad3d.h"
+		$File	"$SRCDIR\public\iserver.h"
+		$File	"$SRCDIR\public\iserverentity.h"
+		$File	"$SRCDIR\public\engine\iserverplugin.h"
+		$File	"$SRCDIR\public\engine\ishadowmgr.h"
+		$File	"$SRCDIR\public\ispatialpartition.h"
+		$File	"ispatialpartitioninternal.h"
+		$File	"$SRCDIR\public\steam\isteamutils.h"
+		$File	"$SRCDIR\public\istudiorender.h"
+		$File	"$SRCDIR\public\ivoicetweak.h"
+		$File	"keys.h"
+		$File	"$SRCDIR\public\tier0\l2cache.h"
+		$File	"l_studio.h"
+		$File	"lightcache.h"
+		$File	"LoadScreenUpdate.h"
+		$File	"LocalNetworkBackdoor.h"
+		$File	"logofile_shared.h"
+		$File	"lowpassstream.h"
+		$File	"MapReslistGenerator.h"
+		$File	"master.h"
+		$File	"MaterialBuckets.h"
+		$File	"materialproxyfactory.h"
+		$File	"mem.h"
+		$File	"mem_fgets.h"
+		$File	"mod_vis.h"
+		$File	"modelloader.h"
+		$File	"$SRCDIR\public\modes.h"
+		$File	"net.h"
+		$File   "netconsole.h"
+		$File	"net_chan.h"
+		$File	"net_support.h"
+		$File	"net_synctags.h"
+		$File	"networkstringtable.h"
+		$File	"$SRCDIR\public\networkstringtabledefs.h"
+		$File	"networkstringtableitem.h"
+		$File	"networkstringtableserver.h"
+		$File	"$SRCDIR\public\nmatrix.h"
+		$File	"$SRCDIR\public\nvector.h"
+		$File	"$SRCDIR\public\optimize.h"
+		$File	"Overlay.h"
+		$File	"packed_entity.h"
+		$File	"pr_edict.h"
+		$File	"precache.h"
+		$File	"profile.h"
+		$File	"profiling.h"
+		$File	"progs.h"
+		$File	"quakedef.h"
+		$File	"r_areaportal.h"
+		$File	"r_decal.h"
+		$File	"r_efxextern.h"
+		$File	"r_local.h"
+		$File	"randomnormals.h"
+		$File	"render.h"
+		$File	"replay.h"
+		$File	"replayclient.h"
+		$File	"replayhistorymanager.h"
+		$File	"replaydemo.h"
+		$File	"replayserver.h"
+		$File	"$SRCDIR\public\savegame_version.h"
+		$File	"saverestore_filesystem.h"
+		$File	"saverestore_filesystem_passthrough.h"
+		$File	"sbar.h"
+		$File	"$SRCDIR\public\scratchpad3d.h"
+		$File	"screen.h"
+		$File	"serializedentity.cpp"
+		$File	"serializedentity.h"
+		$File	"server.h"
+		$File	"shadowmgr.h"
+		$File	"singleplayersharedmemory.h"
+		$File	"audio\private\snd_mp3_source.h"
+		$File	"audio\private\snd_wave_data.h"
+		$File	"$SRCDIR\public\engine\SndInfo.h"
+		$File	"$SRCDIR\public\soundinfo.h"
+		$File	"staticpropmgr.h"
+		$File	"status.h"
+		$File	"$SRCDIR\public\steam\steam_api.h"
+		$File	"$SRCDIR\public\steam\steam_gameserver.h"
+		$File	"$SRCDIR\public\steam\steamtypes.h"
+		$File	"studio_internal.h"
+		$File	"surfacehandle.h"
+		$File	"$SRCDIR\public\surfinfo.h"
+		$File	"sv_client.h"
+		$File	"sv_filter.h"
+		$File	"sv_ipratelimit.h"
+		$File	"sv_log.h"
+		$File	"sv_logofile.h"
+		$File	"sv_main.h"
+		$File	"sv_packedentities.h"
+		$File	"sv_plugin.h"
+		$File	"sv_precache.h"
+		$File	"sv_rcon.h"
+		$File	"sv_remoteaccess.h"
+		$File	"sv_steamauth.h"
+		$File	"sv_uploaddata.h"
+		$File	"sv_uploadgamestats.h"
+		$File	"sv_user.h"
+		$File	"sys.h"
+		$File	"sys_dll.h"
+		$File	"sysexternal.h"
+		$File	"testscriptmgr.h"
+		$File	"$SRCDIR\public\texture_group_names.h"
+		$File	"tmessage.h"
+		$File	"$SRCDIR\public\trace.h"
+		$File	"traceinit.h"
+		$File	"$SRCDIR\public\tier1\utlfixedmemory.h"
+		$File	"$SRCDIR\public\tier1\utlsymbol.h"
+		$File	"vengineserver_impl.h"
+		$File	"vgui_basepanel.h"
+		$File	"vgui_DebugSystemPanel.h"
+		$File	"vgui_drawtreepanel.h"
+		$File	"vgui_helpers.h"
+		$File	"view.h"
+		$File	"vprof_engine.h"
+		$File	"vprof_record.h"
+		$File	"world.h"
+		$File	"zone.h"
+		$File	"baseautocompletefilelist.h"
+		$File	"dt_common_eng.h"
+		$File	"enginebugreporter.h"
+		$File	"engineperftools.h"
+		$File	"host_phonehome.h"
+		$File	"$SRCDIR\public\mathlib\IceKey.H"
+		$File	"IOcclusionSystem.h"
+		$File	"ithread.h"
+		$File	"ModelInfo.h"
+		$File	"$SRCDIR\public\mathlib\polyhedron.h"
+		$File	"sys_mainwind.h"
+		$File	"cl_demoaction.h"
+		$File	"cl_demoaction_types.h"
+		$File	"cl_demoactioneditors.h"
+		$File	"cl_demoactionmanager.h"
+		$File	"cl_demoeditorpanel.h"
+		$File	"cl_demosmootherpanel.h"
+		$File	"cl_demosmoothing.h"
+		$File	"cl_demouipanel.h"
+		$File	"cl_foguipanel.h"
+		$File	"cl_txviewpanel.h"
+		$File	"$SRCDIR\engine\paint.h"
+	}
+
+	$Folder	"Common Headers"
+	{
+		$File	"$SRCDIR\common\bugreporter\bugreporter.h"
+		$File	"$SRCDIR\common\cserserverprotocol_engine.h"
+		$File	"$SRCDIR\common\IVguiModule.h"
+		$File	"$SRCDIR\common\ivprofexport.h"
+		$File	"$SRCDIR\common\qlimits.h"
+		$File	"$SRCDIR\common\Steam.h"
+		$File	"$SRCDIR\common\SteamCommon.h"
+		$File	"$SRCDIR\common\SteamUserIDValidation.h"
+		$File	"$SRCDIR\common\engine_launcher_api.h"
+		$File	"$SRCDIR\common\FindSteamServers.h"
+		$File	"$SRCDIR\common\igameserverdata.h"
+		$File	"$SRCDIR\common\netmessages.h"
+		$File	"$SRCDIR\common\protocol.h"
+		$File	"$SRCDIR\common\SteamWriteMiniDump.h"
+		$File	"$SRCDIR\common\userid.h"
+		$File	"$SRCDIR\common\proto_oob.h"
+		$File	"$SRCDIR\common\ConfigManager.h"
+		$File	"$SRCDIR\common\input_device.h"
+	}
+
+	$Folder	"Public Headers"
+	{
+		$File	"$SRCDIR\public\vgui_controls\AnalogBar.h"
+		$File	"$SRCDIR\public\vgui_controls\AnimationController.h"
+		$File	"$SRCDIR\public\mathlib\anorms.h"
+		$File	"$SRCDIR\public\basehandle.h"
+		$File	"$SRCDIR\public\tier0\basetypes.h"
+		$File	"$SRCDIR\public\tier1\bitbuf.h"
+		$File	"$SRCDIR\public\bitvec.h"
+		$File	"$SRCDIR\public\blockingudpsocket.h"
+		$File	"$SRCDIR\public\bspfile.h"
+		$File	"$SRCDIR\public\bspflags.h"
+		$File	"$SRCDIR\public\builddisp.h"
+		$File	"$SRCDIR\public\vgui_controls\BuildGroup.h"
+		$File	"$SRCDIR\public\mathlib\bumpvects.h"
+		$File	"$SRCDIR\public\vgui_controls\Button.h"
+		$File	"$SRCDIR\public\cdll_int.h"
+		$File	"$SRCDIR\public\tier1\characterset.h"
+		$File	"$SRCDIR\public\vgui_controls\CheckButton.h"
+		$File	"$SRCDIR\public\tier1\checksum_crc.h"
+		$File	"$SRCDIR\public\tier1\checksum_md5.h"
+		$File	"$SRCDIR\public\client_class.h"
+		$File	"$SRCDIR\public\client_textmessage.h"
+		$File	"$SRCDIR\public\clientstats.h"
+		$File	"$SRCDIR\public\cmodel.h"
+		$File	"$SRCDIR\public\color.h"
+		$File	"$SRCDIR\public\vgui_controls\ComboBox.h"
+		$File	"$SRCDIR\public\mathlib\compressed_vector.h"
+		$File	"$SRCDIR\public\con_nprint.h"
+		$File	"$SRCDIR\public\const.h"
+		$File	"$SRCDIR\public\vgui_controls\Controls.h"
+		$File	"$SRCDIR\public\tier1\convar.h"
+		$File	"$SRCDIR\public\coordsize.h"
+		$File	"$SRCDIR\public\crtmemdebug.h"
+		$File	"$SRCDIR\public\vgui\Cursor.h"
+		$File	"$SRCDIR\public\vgui\Dar.h"
+		$File	"$SRCDIR\public\datamap.h"
+		$File	"$SRCDIR\public\tier0\dbg.h"
+		$File	"$SRCDIR\dx9sdk\include\dinput.h"
+		$File	"$SRCDIR\public\disp_vertindex.h"
+		$File	"$SRCDIR\public\dlight.h"
+		$File	"$SRCDIR\public\dt_utlvector_recv.h"
+		$File	"$SRCDIR\public\dt_utlvector_send.h"
+		$File	"$SRCDIR\public\edict.h"
+		$File	"$SRCDIR\public\vgui_controls\EditablePanel.h"
+		$File	"$SRCDIR\public\editor_sendcommand.h"
+		$File	"$SRCDIR\public\eiface.h"
+		$File	"$SRCDIR\public\event_flags.h"
+		$File	"event_system.h"
+		$File	"$SRCDIR\public\tier0\fasttimer.h"
+		$File	"$SRCDIR\public\vgui_controls\FileOpenDialog.h"
+		$File	"$SRCDIR\public\filesystem_helpers.h"
+		$File	"$SRCDIR\public\vgui_controls\FocusNavGroup.h"
+		$File	"$SRCDIR\public\vgui_controls\Frame.h"
+		$File	"$SRCDIR\public\gamebspfile.h"
+		$File	"$SRCDIR\public\gametrace.h"
+		$File	"$SRCDIR\public\globalvars_base.h"
+		$File	"$SRCDIR\public\appframework\iappsystem.h"
+		$File	"$SRCDIR\public\ibsppack.h"
+		$File	"$SRCDIR\public\icliententitylist.h"
+		$File	"$SRCDIR\public\engine\IClientLeafSystem.h"
+		$File	"$SRCDIR\public\iclientnetworkable.h"
+		$File	"$SRCDIR\public\vgui\IClientPanel.h"
+		$File	"$SRCDIR\public\iclientrenderable.h"
+		$File	"$SRCDIR\public\iclientthinkable.h"
+		$File	"$SRCDIR\public\iclientunknown.h"
+		$File	"$SRCDIR\public\engine\ICollideable.h"
+		$File	"$SRCDIR\public\icvar.h"
+		$File	"$SRCDIR\public\iefx.h"
+		$File	"iengine.h"
+		$File	"$SRCDIR\public\ienginevgui.h"
+		$File	"igame.h"
+		$File	"$SRCDIR\public\igameevents.h"
+		$File	"$SRCDIR\public\IGameUIFuncs.h"
+		$File	"$SRCDIR\public\ihandleentity.h"
+		$File	"$SRCDIR\public\ihltv.h"
+		$File	"$SRCDIR\public\vgui\IHTML.h"
+		$File	"$SRCDIR\public\vgui\IImage.h"
+		$File	"$SRCDIR\public\vgui\IInput.h"
+		$File	"$SRCDIR\public\vstdlib\ikeyvaluessystem.h"
+		$File	"$SRCDIR\public\vgui\ILocalize.h"
+		$File	"$SRCDIR\public\vgui_controls\Image.h"
+		$File	"$SRCDIR\public\vgui_controls\ImageList.h"
+		$File	"$SRCDIR\public\materialsystem\imaterial.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialproxy.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialproxyfactory.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialsystem.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialsystemhardwareconfig.h"
+		$File	"$SRCDIR\public\materialsystem\imaterialvar.h"
+		$File	"$SRCDIR\public\VGuiMatSurface\IMatSystemSurface.h"
+		$File	"$SRCDIR\public\materialsystem\imesh.h"
+		$File	"$SRCDIR\public\inetchannelinfo.h"
+		$File	"$SRCDIR\public\inetmessage.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\vgui\IPanel.h"
+		$File	"$SRCDIR\public\iprediction.h"
+		$File	"$SRCDIR\public\irecipientfilter.h"
+		$File	"$SRCDIR\public\iregistry.h"
+		$File	"$SRCDIR\public\ireplay.h"
+		$File	"$SRCDIR\public\ireplaydirector.h"
+		$File	"$SRCDIr\public\engine\ireplayhistorymanager.h"
+		$File	"$SRCDIR\public\isaverestore.h"
+		$File	"$SRCDIR\public\vgui\IScheme.h"
+		$File	"$SRCDIR\public\iservernetworkable.h"
+		$File	"$SRCDIR\public\iserverunknown.h"
+		$File	"$SRCDIR\public\engine\IStaticPropMgr.h"
+		$File	"$SRCDIR\public\steam\isteamclient.h"
+		$File	"$SRCDIR\public\steam\isteamgameserver.h"
+		$File	"$SRCDIR\public\steam\isteamuser.h"
+		$File	"$SRCDIR\public\steam\isteamuserstats.h"
+		$File	"$SRCDIR\public\steam\isteamfriends.h"
+		$File	"$SRCDIR\public\steam\isteammatchmaking.h"
+		$File	"$SRCDIR\public\steam\isteamnetworking.h"
+		$File	"$SRCDIR\public\steam\isteamremotestorage.h"
+		$File	"$SRCDIR\public\steam\matchmakingtypes.h"
+		$File	"$SRCDIR\public\vgui\ISurface.h"
+		$File	"$SRCDIR\public\vgui\ISystem.h"
+		$File	"$SRCDIR\public\materialsystem\itexture.h"
+		$File	"$SRCDIR\public\vaudio\ivaudio.h"
+		$File	"$SRCDIR\public\engine\ivdebugoverlay.h"
+		$File	"$SRCDIR\public\vgui\IVGui.h"
+		$File	"ivideomode.h"
+		$File	"$SRCDIR\public\engine\ivmodelinfo.h"
+		$File	"$SRCDIR\public\engine\ivmodelrender.h"
+		$File	"$SRCDIR\public\ivoiceserver.h"
+		$File	"$SRCDIR\public\ivrenderview.h"
+		$File	"$SRCDIR\public\ivtex.h"
+		$File	"$SRCDIR\public\jpeglib\jconfig.h"
+		$File	"$SRCDIR\public\jpeglib\jmorecfg.h"
+		$File	"$SRCDIR\public\jpeglib\jpeglib.h"
+		$File	"$SRCDIR\public\vgui\KeyCode.h"
+		$File	"$SRCDIR\public\tier1\keyvalues.h"
+		$File	"$SRCDIR\public\vgui_controls\Label.h"
+		$File	"$SRCDIR\public\vgui_controls\ListPanel.h"
+		$File	"$SRCDIR\public\lumpfiles.h"
+		$File	"$SRCDIR\public\materialsystem\materialsystem_config.h"
+		$File	"$SRCDIR\public\mathlib\mathlib.h"
+		$File	"$SRCDIR\public\measure_section.h"
+		$File	"$SRCDIR\public\tier0\mem.h"
+		$File	"$SRCDIR\public\tier0\memalloc.h"
+		$File	"$SRCDIR\public\tier0\memdbgoff.h"
+		$File	"$SRCDIR\public\tier0\memdbgon.h"
+		$File	"$SRCDIR\public\tier1\mempool.h"
+		$File	"$SRCDIR\public\tier1\memstack.h"
+		$File	"$SRCDIR\public\vgui_controls\Menu.h"
+		$File	"$SRCDIR\public\vgui_controls\MenuButton.h"
+		$File	"$SRCDIR\public\vgui_controls\MenuItem.h"
+		$File	"$SRCDIR\public\model_types.h"
+		$File	"$SRCDIR\public\vgui\MouseCode.h"
+		$File	"$SRCDIR\public\mouthinfo.h"
+		$File	"$SRCDIR\public\tier1\netadr.h"
+		$File	"networkstringtableclient.h"
+		$File	"$SRCDIR\public\networkvar.h"
+		$File	"$SRCDIR\public\overlaytext.h"
+		$File	"$SRCDIR\public\vgui_controls\Panel.h"
+		$File	"$SRCDIR\public\vgui_controls\PanelAnimationVar.h"
+		$File	"$SRCDIR\public\vgui_controls\PHandle.h"
+		$File	"$SRCDIR\public\phyfile.h"
+		$File	"$SRCDIR\public\tier0\platform.h"
+		$File	"$SRCDIR\public\PlayerState.h"
+		$File	"$SRCDIR\public\vgui_controls\ProgressBar.h"
+		$File	"$SRCDIR\public\vgui_controls\PropertyDialog.h"
+		$File	"$SRCDIR\public\vgui_controls\PropertyPage.h"
+		$File	"$SRCDIR\public\vgui_controls\PropertySheet.h"
+		$File	"$SRCDIR\public\r_efx.h"
+		$File	"$SRCDIR\public\vstdlib\random.h"
+		$File	"$SRCDIR\public\saverestoretypes.h"
+		$File	"$SRCDIR\public\vgui_controls\ScrollBar.h"
+		$File	"$SRCDIR\public\sentence.h"
+		$File	"$SRCDIR\public\server_class.h"
+		$File	"$SRCDIR\public\shake.h"
+		$File	"$SRCDIR\public\vgui_controls\Slider.h"
+		$File	"$SRCDIR\public\tier1\smartptr.h"
+		$File	"$SRCDIR\public\smooth_average.h"
+		$File	"$SRCDIR\public\soundchars.h"
+		$File	"$SRCDIR\public\soundflags.h"
+		$File	"$SRCDIR\public\stdstring.h"
+		$File	"$SRCDIR\public\steam\steamclientpublic.h"
+		$File	"$SRCDIR\public\string_t.h"
+		$File	"$SRCDIR\public\tier1\strtools.h"
+		$File	"$SRCDIR\public\studio.h"
+		$File	"$SRCDIR\public\vgui_controls\TextEntry.h"
+		$File	"$SRCDIR\public\vgui_controls\TextImage.h"
+		$File	"$SRCDIR\public\vgui_controls\ToggleButton.h"
+		$File	"$SRCDIR\public\vgui_controls\Tooltip.h"
+		$File	"$SRCDIR\public\vgui_controls\TreeView.h"
+		$File	"$SRCDIR\public\vgui_controls\TreeViewListControl.h"
+		$File	"$SRCDIR\public\tier1\utlbidirectionalset.h"
+		$File	"$SRCDIR\public\tier1\utlbuffer.h"
+		$File	"$SRCDIR\public\UtlCachedFileData.h"
+		$File	"$SRCDIR\public\tier1\utldict.h"
+		$File	"$SRCDIR\public\tier1\utlhash.h"
+		$File	"$SRCDIR\public\tier1\utllinkedlist.h"
+		$File	"$SRCDIR\public\tier1\utlmemory.h"
+		$File	"$SRCDIR\public\tier1\utlmultilist.h"
+		$File	"$SRCDIR\public\tier1\utlrbtree.h"
+		$File	"$SRCDIR\public\tier1\utlsortvector.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"$SRCDIR\public\vallocator.h"
+		$File	"$SRCDIR\public\vcollide.h"
+		$File	"$SRCDIR\public\vcollide_parse.h"
+		$File	"$SRCDIR\public\mathlib\vector.h"
+		$File	"$SRCDIR\public\mathlib\vector2d.h"
+		$File	"$SRCDIR\public\mathlib\vector4d.h"
+		$File	"$SRCDIR\public\vgui\vgui.h"
+		$File	"$SRCDIR\public\view_shared.h"
+		$File	"$SRCDIR\public\mathlib\vmatrix.h"
+		$File	"vmodes.h"
+		$File	"$SRCDIR\common\networksystem\inetworksystem.h"
+		$File	"$SRCDIR\public\vphysics_interface.h"
+		$File	"$SRCDIR\public\mathlib\vplane.h"
+		$File	"$SRCDIR\public\tier0\vprof.h"
+		$File	"$SRCDIR\public\vstdlib\vstdlib.h"
+		$File	"$SRCDIR\public\vtf\vtf.h"
+		$File	"$SRCDIR\public\worldsize.h"
+		$File	"$SRCDIR\public\zip\XZip.h"
+		$File	"$SRCDIR\public\zip_uncompressed.h"
+		$File	"$SRCDIR\public\xwvfile.h"
+	}
+
+	$Folder "Debugging"
+	{
+		$File	"bsplog.h"
+		$File	"bsplog.cpp"
+	}
+	
+	$Folder	"Link libraries"
+	{
+		$ImplibExternal	steam_api							[!$NO_STEAM && !$WIN64]
+		$ImplibExternal	steam_api64							[!$NO_STEAM && $WIN64]
+
+		$Lib	appframework
+		$Lib	bitmap
+		$Lib	dmxloader
+		$Lib	mathlib
+		$Lib	matsys_controls						[!$DEDICATED]
+		$Lib	soundsystem_lowlevel				[!$DEDICATED]
+		$Lib	tier2
+		$Lib	tier3
+		$Lib    videocfg							[$WINDOWS||$OSXALL||($LINUXALL&&!$DEDICATED)]
+		$Lib	vtf
+		$Lib	vgui_controls						[!$DEDICATED]
+		//$Lib	"$LIBPUBLIC/steamdatagramlib"		[!$VS2015]
+		//$Lib	"$LIBPUBLIC/2015/steamdatagramlib"	[$VS2015]
+		$Lib bzip2
+
+		$Lib	"jpeglib" [$WINDOWS || $OSXALL || ($LINUX && !$DEDICATED)]
+
+		$Lib	"$SRCDIR\dx9sdk\Lib$PLATSUBDIR\dsound"		[$WINDOWS]
+		$Lib	"$SRCDIR\dx9sdk\Lib$PLATSUBDIR\dxguid"		[$WINDOWS]
+
+		$Lib protobuf
+		$Lib cryptlib
+
+
+		$Libexternal	"$LIBCOMMON/libcurlssl" [$LINUXALL&&!$DEDICATED]
+		$Libexternal	"$LIBCOMMON/libssl" [$LINUXALL&&!$DEDICATED]
+		$Lib zlib [$LINUXALL&&!$DEDICATED]
+		$Lib $LIBCOMMON/libcrypto [$LINUXALL&&!$DEDICATED]
+
+		$Lib	"$SRCDIR\lib\osx32\MacOSX10.6.sdk\libcurl.dylib"	[$OSXALL]
+        $Lib     "quickhull" 
+		$ImpLib	"SDL2" [$SDL && !$LINUXALL]
+
+		$Lib	"$LIBCOMMON\phonon3d"	[$WIN32 && $WITH_PHONON]
+		$Lib	"$SRCDIR\lib\common\x64\phonon3d"	[!$DEDICATED && $WITH_PHONON]
+	}
+}
