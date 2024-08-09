@@ -1719,8 +1719,10 @@ bool CSoundEmitterSystemBase::GetParametersForSoundEx( const char *soundname, HS
 	}
 	params.soundlevel = (soundlevel_t)(int)internal->GetSoundLevel().Random();
 	params.play_to_owner_only = internal->OnlyPlayToOwner();
+#ifdef WITH_PHONON
 	params.m_bHRTFBilinear = internal->HasHRTFBilinear();
 	params.m_bHRTFFollowEntity = internal->HasHRTFFollowEntity();
+#endif
 
 	if ( !params.soundname[ 0 ] )
 	{
