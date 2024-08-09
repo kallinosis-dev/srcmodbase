@@ -50,5 +50,7 @@ $Project "Actbusy"
 		$Lib tier3
 		$Lib toolutils
 		$Lib vgui_controls
+		$Lib bonesetup
+		$Lib particles
 	}
 }

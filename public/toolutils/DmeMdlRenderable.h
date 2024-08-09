@@ -19,6 +19,7 @@
 #include "toolutils/enginetools_int.h"
 #include "materialsystem/imaterialsystemhardwareconfig.h"
 #include "tier3/tier3.h"
+#include "toolframework/ienginetool.h"
 
 
 //-----------------------------------------------------------------------------
@@ -55,8 +56,8 @@ private:
 template < class T >
 void CDmeMdlRenderable<T>::OnConstruction() 
 {
-	m_hMDL = CreateElement<CDmeMDL>( "MDLRenderable", GetFileId() );
-	m_hTransform = CreateElement<CDmeTransform>( "MDLTransform", GetFileId() );
+	m_hMDL = CreateElement<CDmeMDL>( "MDLRenderable", this->GetFileId() );
+	m_hTransform = CreateElement<CDmeTransform>( "MDLTransform", this->GetFileId() );
 }
 
 template < class T >
@@ -82,10 +83,10 @@ template < class T >
 int	CDmeMdlRenderable<T>::DrawModel( int flags, const RenderableInstance_t &instance )
 {
 	matrix3x4_t mat;
-	AngleMatrix( GetRenderAngles(), GetRenderOrigin(), mat );
+	AngleMatrix( this->GetRenderAngles(), this->GetRenderOrigin(), mat );
 	m_hTransform->SetTransform( mat );
 	m_hMDL->m_flTime = Plat_FloatTime();
-	SetUpLighting( GetRenderOrigin() );
+	SetUpLighting(this->GetRenderOrigin() );
 	bool bIsDrawingInEngine = m_hMDL->IsDrawingInEngine();
 	m_hMDL->DrawInEngine( true );
 	m_hMDL->Draw( mat );

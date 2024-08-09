@@ -116,6 +116,8 @@ private:
 	// Hooks the preview to an existing material, if there is one
 	void SetupPreviewMaterial( );
 
+	void SetupDummyMaterial();
+
 	// Prior to saving to disk, extract all shader parameters which == the default
 	CDmElement* ExtractDefaultParameters( );
 

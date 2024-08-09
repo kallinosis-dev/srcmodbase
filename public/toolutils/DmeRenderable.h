@@ -19,6 +19,7 @@
 #include "toolutils/enginetools_int.h"
 #include "engine/iclientleafsystem.h"
 #include "datamodel/dmelementfactoryhelper.h"
+#include "toolframework/itoolentity.h"
 
 
 //-----------------------------------------------------------------------------

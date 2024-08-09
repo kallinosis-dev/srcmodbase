@@ -8,6 +8,7 @@
 
 #include "actbusydoc.h"
 #include "datamodel/dmelement.h"
+#include "datamodel/dmattributevar.h"
 #include "actbusytool.h"
 
 
@@ -160,7 +161,7 @@ void CActBusyDoc::CreateActBusy()
 	hActBusy->SetValue( "max_time", 0.0f );
 	hActBusy->SetValue( "interrupts", "BA_INT_NONE" );
 
-	CDmrElementArray<> children( pRoot, "children" );
+	CDmrElementArray<CDmElement> children( pRoot, "children" );
 	children.AddToTail( hActBusy );
 }
 

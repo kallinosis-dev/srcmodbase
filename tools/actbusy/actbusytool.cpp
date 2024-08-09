@@ -67,6 +67,13 @@ void DisconnectTools( )
 }
 
 
+// Used by particle lib for some reason
+bool UTIL_IsDedicatedServer()
+{
+	return false;
+}
+
+
 //-----------------------------------------------------------------------------
 // Implementation of the act busy tool
 //-----------------------------------------------------------------------------
@@ -567,7 +574,7 @@ int	 CActBusyTool::GetFileMenuItemsEnabled( )
 	int nFlags;
 	if ( !m_pDoc )
 	{
-		nFlags = FILE_NEW | FILE_OPEN | FILE_RECENT | FILE_CLEAR_RECENT | FILE_EXIT;
+		nFlags = FILE_NEW | FILE_OPEN | FILE_RECENT | FILE_EXIT;
 	}
 	else
 	{
@@ -576,7 +583,7 @@ int	 CActBusyTool::GetFileMenuItemsEnabled( )
 
 	if ( m_RecentFiles.IsEmpty() )
 	{
-		nFlags &= ~(FILE_RECENT | FILE_CLEAR_RECENT);
+		nFlags &= ~FILE_RECENT;
 	}
 	return nFlags;
 }

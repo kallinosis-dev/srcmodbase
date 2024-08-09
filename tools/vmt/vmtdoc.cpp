@@ -300,20 +300,27 @@ void CVMTDoc::SetupPreviewMaterial( )
 	}
 
 	if ( Q_strnicmp( pLocalName, "materials", 9 ) )
-		goto noMaterialConnection;
+	{
+		SetupDummyMaterial();
+		return;
+	}
 
 	// Skip the '/' also
 	char pMaterialName[MAX_PATH];
 	Q_StripExtension( pLocalName + 10, pMaterialName, sizeof(pMaterialName) );
 	IMaterial *pMaterial = g_pMaterialSystem->FindMaterial( pMaterialName, "Editable material", false );
 	if ( !pMaterial || pMaterial->IsErrorMaterial() )
-		goto noMaterialConnection;
+	{
+		SetupDummyMaterial();
+		return;
+	}
 
 	m_pPreviewMaterial.Init( pMaterial );
-	return;
+}
 
-noMaterialConnection:
-	m_pPreviewMaterial.Init( m_pScratchMaterial );
+void CVMTDoc::SetupDummyMaterial()
+{
+	m_pPreviewMaterial.Init(m_pScratchMaterial);
 }
 
 
