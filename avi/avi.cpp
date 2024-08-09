@@ -468,6 +468,8 @@ public:
 	virtual void RegenerateTextureBits( ITexture *pTexture, IVTFTexture *pVTFTexture, Rect_t *pRect );
 	virtual void Release();
 
+	static void ResetTexture(IVTFTexture* texture);
+
 	// Returns the material
 	IMaterial *GetMaterial();
 
@@ -820,7 +822,6 @@ void CAVIMaterial::DestroyVideoStream( )
 		m_pAVIStream = nullptr;
 	}
 }
-
 	
 //-----------------------------------------------------------------------------
 // Inherited from ITextureRegenerator
@@ -836,12 +837,16 @@ void CAVIMaterial::RegenerateTextureBits( ITexture *pTexture, IVTFTexture *pVTFT
 	if ( !m_pAVIStream || !m_pGetFrame || (pVTFTexture->FrameCount() > 1) || 
 		(pVTFTexture->FaceCount() > 1) || (pVTFTexture->MipCount() > 1) || (pVTFTexture->Depth() > 1) )
 	{
-		goto AVIMaterialError;
+		ResetTexture(pVTFTexture);
+		return;
 	}
 
 	lpbih = (LPBITMAPINFOHEADER)AVIStreamGetFrame( m_pGetFrame, m_nCurrentSample );
 	if ( !lpbih )
-		goto AVIMaterialError;
+	{
+		ResetTexture(pVTFTexture);
+		return;
+	}
 
 	// Set up the pixel writer to write into the VTF texture
 	pixelWriter.SetPixelMemory( pVTFTexture->Format(), 
@@ -851,7 +856,10 @@ void CAVIMaterial::RegenerateTextureBits( ITexture *pTexture, IVTFTexture *pVTFT
 	int nHeight = pVTFTexture->Height();
 	int nBihHeight = abs( lpbih->biHeight );
 	if ( lpbih->biWidth > nWidth || nBihHeight > nHeight )
-		goto AVIMaterialError;
+	{
+		ResetTexture(pVTFTexture);
+		return;
+	}
 
 	pData = (unsigned char *)lpbih + lpbih->biSize;
 	if ( lpbih->biBitCount == 8 )
@@ -905,18 +913,21 @@ void CAVIMaterial::RegenerateTextureBits( ITexture *pTexture, IVTFTexture *pVTFT
 		}
 	}
 	return;
-
-AVIMaterialError:
-	int nBytes = pVTFTexture->ComputeTotalSize();
-	memset( pVTFTexture->ImageData(), 0xFF, nBytes );
-	return;
 }
+
+
+void CAVIMaterial::ResetTexture(IVTFTexture* texture)
+{
+	int nBytes = texture->ComputeTotalSize();
+	memset(texture->ImageData(), 0xFF, nBytes);
+}
+
 
 void CAVIMaterial::Release()
 {
 }
 
-	
+
 //-----------------------------------------------------------------------------
 //
 // Implementation of IAvi
