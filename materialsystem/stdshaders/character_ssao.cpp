@@ -10,10 +10,7 @@
 #include "common_hlsl_cpp_consts.h" // hack hack hack!
 #include "convar.h"
 
-#include "character_ssao_vs20.inc"
 #include "character_ssao_vs30.inc"
-#include "character_ssao_ps20.inc"
-#include "character_ssao_ps20b.inc"
 #include "character_ssao_ps30.inc"
 #include "shaderlib/commandbuilder.h"
 
@@ -41,6 +38,9 @@ BEGIN_VS_SHADER( CharacterSSAO, "Help for CharacterSSAO" )
 
 	SHADER_FALLBACK
 	{
+		if (!g_pHardwareConfig->SupportsPixelShaders_3_0())
+			return "Wireframe";
+
 		return nullptr;
 	}
 
@@ -81,27 +81,13 @@ BEGIN_VS_SHADER( CharacterSSAO, "Help for CharacterSSAO" )
 			int userDataSize = 0;
 			pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, nullptr, userDataSize );
 			
-			DECLARE_STATIC_VERTEX_SHADER( character_ssao_vs20 );
-			SET_STATIC_VERTEX_SHADER( character_ssao_vs20 );
+			DECLARE_STATIC_VERTEX_SHADER( character_ssao_vs30 );
+			SET_STATIC_VERTEX_SHADER( character_ssao_vs30 );
 
-			if( g_pHardwareConfig->SupportsPixelShaders_3_0() )
-			{
-				DECLARE_STATIC_PIXEL_SHADER( character_ssao_ps30 );
-				SET_STATIC_PIXEL_SHADER_COMBO( QUALITY_MODE, 2 );
-				SET_STATIC_PIXEL_SHADER( character_ssao_ps30 );
-			}
-			else if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-			{
-				DECLARE_STATIC_PIXEL_SHADER( character_ssao_ps20b );
-				SET_STATIC_PIXEL_SHADER_COMBO( QUALITY_MODE, 1 );
-				SET_STATIC_PIXEL_SHADER( character_ssao_ps20b );
-			}
-			else
-			{
-				DECLARE_STATIC_PIXEL_SHADER( character_ssao_ps20 );
-				SET_STATIC_PIXEL_SHADER_COMBO( QUALITY_MODE, 0 );
-				SET_STATIC_PIXEL_SHADER( character_ssao_ps20 );
-			}
+			DECLARE_STATIC_PIXEL_SHADER( character_ssao_ps30 );
+			SET_STATIC_PIXEL_SHADER_COMBO( QUALITY_MODE, 2 );
+			SET_STATIC_PIXEL_SHADER( character_ssao_ps30 );
+
 			
 			pShaderShadow->EnableAlphaWrites( false );
 			pShaderShadow->EnableDepthWrites( false );
@@ -134,23 +120,15 @@ BEGIN_VS_SHADER( CharacterSSAO, "Help for CharacterSSAO" )
 			SetVertexShaderTextureTransform( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, BASETEXTURETRANSFORM );
 			
 			#ifdef NOISE_SAMPLE
-				float c0[4] = {	fmod( pShaderAPI->CurrentTime(), 1.0f ) * 14.54321f, fmod( pShaderAPI->CurrentTime(), 1.0f ) * 16.12345f, 0, 0 };
+				float c0[4] = {	fmodf( pShaderAPI->CurrentTime(), 1.0f ) * 14.54321f, fmodf( pShaderAPI->CurrentTime(), 1.0f ) * 16.12345f, 0, 0 };
 				pShaderAPI->SetPixelShaderConstant( 0, c0, 1 );
 			#endif
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( character_ssao_vs20 );
-			SET_DYNAMIC_VERTEX_SHADER( character_ssao_vs20 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( character_ssao_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( character_ssao_vs30 );
 
-			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-			{
-				DECLARE_DYNAMIC_PIXEL_SHADER( character_ssao_ps20b );
-				SET_DYNAMIC_PIXEL_SHADER( character_ssao_ps20b );
-			}
-			else
-			{
-				DECLARE_DYNAMIC_PIXEL_SHADER( character_ssao_ps20 );
-				SET_DYNAMIC_PIXEL_SHADER( character_ssao_ps20 );
-			}
+			DECLARE_DYNAMIC_PIXEL_SHADER(character_ssao_ps30);
+			SET_DYNAMIC_PIXEL_SHADER( character_ssao_ps30 );
 		}
 		Draw();
 	}

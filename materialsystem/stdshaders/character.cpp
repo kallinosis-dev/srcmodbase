@@ -7,8 +7,6 @@
 
 #include "character_vs30.inc"
 #include "character_ps30.inc"
-#include "character_vs20.inc"
-#include "character_ps20b.inc"
 
 #include "../materialsystem_global.h"
 

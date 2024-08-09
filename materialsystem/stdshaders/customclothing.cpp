@@ -10,9 +10,7 @@
 #include "common_hlsl_cpp_consts.h" // hack hack hack!
 #include "convar.h"
 
-#include "customclothing_vs20.inc"
 #include "customclothing_vs30.inc"
-#include "customclothing_ps20b.inc"
 #include "customclothing_ps30.inc"
 
 #include "writez_vs20.inc"
@@ -187,6 +185,9 @@ BEGIN_VS_SHADER( CustomClothing, "Help for CustomClothing" )
 
 	SHADER_FALLBACK
 	{
+		if (!g_pHardwareConfig->SupportsPixelShaders_3_0())
+			return "Wireframe";
+
 		return nullptr;
 	}
 
@@ -283,19 +284,10 @@ BEGIN_VS_SHADER( CustomClothing, "Help for CustomClothing" )
 				flags |= VERTEX_COLOR;
 			}
 			pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, nullptr, userDataSize );
-			
-			if ( g_pHardwareConfig->SupportsPixelShaders_3_0() )
-			{
-				DECLARE_STATIC_VERTEX_SHADER( customclothing_vs30 );
-				SET_STATIC_VERTEX_SHADER_COMBO( COMPOSITEMODE, iCompositeMode );
-				SET_STATIC_VERTEX_SHADER( customclothing_vs30 );
-			}
-			else
-			{
-				DECLARE_STATIC_VERTEX_SHADER( customclothing_vs20 );
-				SET_STATIC_VERTEX_SHADER_COMBO( COMPOSITEMODE, iCompositeMode );
-				SET_STATIC_VERTEX_SHADER( customclothing_vs20 );
-			}
+
+			DECLARE_STATIC_VERTEX_SHADER(customclothing_vs30);
+			SET_STATIC_VERTEX_SHADER_COMBO( COMPOSITEMODE, iCompositeMode );
+			SET_STATIC_VERTEX_SHADER( customclothing_vs30 );
 
 			bool bUsePattern1 =			bNeedCompositeInputs && params[ PATTERN1 ]->IsDefined() && params[ PATTERN1 ]->IsTexture();
 			bool bUsePattern2 =			bNeedCompositeInputs && params[ PATTERN2 ]->IsDefined() && params[ PATTERN2 ]->IsTexture();
@@ -323,33 +315,18 @@ BEGIN_VS_SHADER( CustomClothing, "Help for CustomClothing" )
 				bSwapPatternMasks =	false;
 			}
 
-			if( g_pHardwareConfig->SupportsPixelShaders_3_0() )
-			{
-				DECLARE_STATIC_PIXEL_SHADER( customclothing_ps30 );
-				SET_STATIC_PIXEL_SHADER_COMBO( CASCADED_SHADOW_MAPPING, bCSMEnabled );
-				SET_STATIC_PIXEL_SHADER_COMBO( COMPOSITEMODE, iCompositeMode );
-				SET_STATIC_PIXEL_SHADER_COMBO( CSM_MODE, nCSMQualityComboValue );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_PATTERN1, bUsePattern1 );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_PATTERN2, bUsePattern2 );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_PATTERN_OFFSET, bUsePatternOffset );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_LOGO1, bUseLogo1 );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_LOGO2, bUseLogo2 );
-				SET_STATIC_PIXEL_SHADER_COMBO( SWAP_PATTERN_MASKS, bSwapPatternMasks );
-				SET_STATIC_PIXEL_SHADER( customclothing_ps30 );
-			}
-			else
-			{
-				DECLARE_STATIC_PIXEL_SHADER( customclothing_ps20b );
-				SET_STATIC_PIXEL_SHADER_COMBO( COMPOSITEMODE, iCompositeMode );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_PATTERN1, bUsePattern1 );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_PATTERN2, bUsePattern2 );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_PATTERN_OFFSET, bUsePatternOffset );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_LOGO1, bUseLogo1 );
-				SET_STATIC_PIXEL_SHADER_COMBO( USE_LOGO2, bUseLogo2 );
-				SET_STATIC_PIXEL_SHADER_COMBO( SWAP_PATTERN_MASKS, bSwapPatternMasks );
-				SET_STATIC_PIXEL_SHADER( customclothing_ps20b );
-			}
-			
+			DECLARE_STATIC_PIXEL_SHADER(customclothing_ps30);
+			SET_STATIC_PIXEL_SHADER_COMBO( CASCADED_SHADOW_MAPPING, bCSMEnabled );
+			SET_STATIC_PIXEL_SHADER_COMBO( COMPOSITEMODE, iCompositeMode );
+			SET_STATIC_PIXEL_SHADER_COMBO( CSM_MODE, nCSMQualityComboValue );
+			SET_STATIC_PIXEL_SHADER_COMBO( USE_PATTERN1, bUsePattern1 );
+			SET_STATIC_PIXEL_SHADER_COMBO( USE_PATTERN2, bUsePattern2 );
+			SET_STATIC_PIXEL_SHADER_COMBO( USE_PATTERN_OFFSET, bUsePatternOffset );
+			SET_STATIC_PIXEL_SHADER_COMBO( USE_LOGO1, bUseLogo1 );
+			SET_STATIC_PIXEL_SHADER_COMBO( USE_LOGO2, bUseLogo2 );
+			SET_STATIC_PIXEL_SHADER_COMBO( SWAP_PATTERN_MASKS, bSwapPatternMasks );
+			SET_STATIC_PIXEL_SHADER( customclothing_ps30 );
+
 			pShaderShadow->EnableAlphaWrites( true );
 			pShaderShadow->EnableDepthWrites( true );
 			pShaderShadow->EnableSRGBWrite( true );
@@ -513,22 +490,11 @@ BEGIN_VS_SHADER( CustomClothing, "Help for CustomClothing" )
 				nNumLights = lightState.m_nNumLights;
 			}
 
-			if( g_pHardwareConfig->SupportsPixelShaders_3_0() )
-			{
-				DECLARE_DYNAMIC_VERTEX_SHADER( customclothing_vs30 );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( NUM_LIGHTS, nNumLights );
-				SET_DYNAMIC_VERTEX_SHADER( customclothing_vs30 );
-			}
-			else
-			{
-				DECLARE_DYNAMIC_VERTEX_SHADER( customclothing_vs20 );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( NUM_LIGHTS, nNumLights );
-				SET_DYNAMIC_VERTEX_SHADER( customclothing_vs20 );
-			}
+			DECLARE_DYNAMIC_VERTEX_SHADER(customclothing_vs30);
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( NUM_LIGHTS, nNumLights );
+			SET_DYNAMIC_VERTEX_SHADER( customclothing_vs30 );
 
 			bool bCSMEnabled = pShaderAPI->IsCascadedShadowMapping() && (iCompositeMode != MODE_2D_COMPOSITE);
 			if ( bCSMEnabled && !bAOPrePass )
@@ -548,23 +514,11 @@ BEGIN_VS_SHADER( CustomClothing, "Help for CustomClothing" )
 				}
 			}
 
-			if( g_pHardwareConfig->SupportsPixelShaders_3_0() )
-			{
-				DECLARE_DYNAMIC_PIXEL_SHADER( customclothing_ps30 );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( NUM_LIGHTS, nNumLights );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( DYN_CSM_ENABLED, bCSMEnabled && !bAOPrePass );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( AO_MODE, bAOPrePass );
-				SET_DYNAMIC_PIXEL_SHADER( customclothing_ps30 );
-			}
-			else
-			{
-				DECLARE_DYNAMIC_PIXEL_SHADER( customclothing_ps20b );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( NUM_LIGHTS, nNumLights );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( DYN_CSM_ENABLED, 0 );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( AO_MODE, bAOPrePass );
-				SET_DYNAMIC_PIXEL_SHADER( customclothing_ps20b );
-			}
-
+			DECLARE_DYNAMIC_PIXEL_SHADER(customclothing_ps30);
+			SET_DYNAMIC_PIXEL_SHADER_COMBO( NUM_LIGHTS, nNumLights );
+			SET_DYNAMIC_PIXEL_SHADER_COMBO( DYN_CSM_ENABLED, bCSMEnabled && !bAOPrePass );
+			SET_DYNAMIC_PIXEL_SHADER_COMBO( AO_MODE, bAOPrePass );
+			SET_DYNAMIC_PIXEL_SHADER( customclothing_ps30 );
 		}
 		Draw();
 	}
