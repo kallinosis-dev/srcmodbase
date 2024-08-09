@@ -19,7 +19,7 @@ $Configuration
 
 	$Linker
 	{
-		$AdditionalDependencies				"$BASE $SRCDIR\dx9sdk\lib\dxerr8.lib $SRCDIR\dx9sdk\lib\d3d8.lib $SRCDIR\dx9sdk\lib\d3dx.lib odbc32.lib odbccp32.lib"
+		$AdditionalDependencies				"$BASE odbc32.lib odbccp32.lib"
 	}
 }
 
@@ -51,5 +51,8 @@ $Project "ScratchPad3DViewer"
 	$Folder	"Link Libraries"
 	{
 		$Lib mathlib
+		$Lib "$SRCDIR\dx9sdk\lib$PLATSUBDIR\dxerr8"
+		$Lib "$SRCDIR\dx9sdk\lib$PLATSUBDIR\d3d8"
+		$Lib "$SRCDIR\dx9sdk\lib$PLATSUBDIR\d3dx"
 	}
 }

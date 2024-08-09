@@ -29,7 +29,7 @@ $Configuration
 		$AdditionalDependencies				"$BASE vfw32.lib" [$WINDOWS]
 		$SystemLibraries                    "iconv" [$OSXALL]
 		$SystemFrameworks					"Quicktime;Carbon"
-		$AdditionalLibraryDirectories		"$BASE;$SRCDIR\dx9sdk\lib"	[$WINDOWS]
+		$AdditionalLibraryDirectories		"$BASE;$SRCDIR\dx9sdk\lib$PLATSUBDIR"	[$WINDOWS]
 		$GCC_ExtraLinkerFlags				"-z muldefs -L$SRCDIR/thirdparty/sdl/build/.libs" [$LINUXALL]
 		$SystemLibraries					"SDL2" [$LINUXALL]
 	}
@@ -65,8 +65,8 @@ $Project "valve_avi"
 		$Lib tier2
 		$Lib tier3
 		$Lib   "$LIBCOMMON\quicktime\QTMLClient.lib"		[$QUICKTIME_WINDOWS]
-		$Lib	"$SRCDIR\DX9SDK\lib\dsound.lib"						[$QUICKTIME_WINDOWS]
-		$Lib	"$SRCDIR\DX9SDK\lib\dxguid.lib"						[$QUICKTIME_WINDOWS]
+		$Lib	"$SRCDIR\DX9SDK\lib$PLATSUBDIR\dsound.lib"						[$QUICKTIME_WINDOWS]
+		$Lib	"$SRCDIR\DX9SDK\lib$PLATSUBDIR\dxguid.lib"						[$QUICKTIME_WINDOWS]
 		$Lib	"$LIBCOMMON\libSDL2_mixer.a"				[$LINUXALL]
 	}
 
