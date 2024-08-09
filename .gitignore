@@ -279,3 +279,6 @@ _vpc_/
 # Protobuf stuff
 generated_proto/
 generated_proto_gc/
+
+# Shaders
+/materialsystem/stdshaders/fxctmp9
