@@ -96,7 +96,7 @@ function Flatten-ShaderIncludes([FileInfo]$Shader, [string]$RootDir) {
 }
 
 function Parse-ShaderParamModifiers([string]$ParamsAndConds, [ShaderCompilation]$Compilation) {
-    $ShadermodelNotPassed = $null
+    $ShadermodelPassed = $null
     $Initializer = $null
 
     while($ParamsAndConds -match "(.+)\[(.+?)\]\s*$") { # Strip rightmost condition and previous text
@@ -113,8 +113,11 @@ function Parse-ShaderParamModifiers([string]$ParamsAndConds, [ShaderCompilation]
             "SONYPS3" { return }
 
             "((?:ps|vs)\d+\w?)" { # Shader type and shadermodel check
-                $ShadermodelNotPassed = $false -or $ShadermodelNotPassed -or `
-                    $Compilation.CompileAs_ShaderModel -ine $Matches.1
+                if($null -eq $ShadermodelPassed) { $ShadermodelPassed = $false }
+                $ShadermodelPassed = $ShadermodelPassed -or `
+                    $Compilation.CompileAs_ShaderModel -ieq $Matches.1
+
+                #Write-Host "- Shadermodel condition $($Matches.1) passed = $ShadermodelPassed"
 
                 continue
             }
@@ -133,10 +136,13 @@ function Parse-ShaderParamModifiers([string]$ParamsAndConds, [ShaderCompilation]
     }
 
     # Neither $true nor $null
-    if($ShadermodelNotPassed -eq $false) { return }
+    if($ShadermodelPassed -eq $false) { return }
+    $Params = $ParamsAndConds.Trim()
+
+    #Write-Host "- Params: $Params"
 
     return @{
-        Params = $ParamsAndConds.Trim();
+        Params = $Params;
         Initializer = $Initializer;
     }
 }
@@ -150,7 +156,9 @@ function Process-ShaderParams([ShaderCompilation]$Compilation) {
         if($_ -cnotmatch '^\s*\/\/\s*(STATIC|DYNAMIC|SKIP)\s*:(.*)$') { return; }
 
         $Mode = $Matches.1
-        $ParamsAndConds = $Matches.2
+        $ParamsAndConds = $Matches.2 -replace "\/\/.*$",""
+
+        #Write-Host "Mode: $Mode"
 
         $Result, $ErrorInfo = Parse-ShaderParamModifiers $ParamsAndConds $Compilation
         if($null -eq $Result) {
@@ -217,7 +225,7 @@ public:
     if($null -eq $Combo.Initializer) {
 @"
 #ifdef _DEBUG
-        bool $CheckVar = true;
+        $CheckVar = true;
 #endif
 "@ 
     }
@@ -250,7 +258,7 @@ function Get-ShaderType-ComboInitChecker([string]$ShaderModel) {
 
 function Generate-ComboInitChecker([System.Collections.Specialized.OrderedDictionary]$Combos, [string]$ComboSet, [string]$ShaderType) {
     $Result = [string]::Join(" + ", @(
-        $Combos.Values | % {"forgot_to_set_$($ShaderType)_$($_.Name)"}
+        $Combos.Values | ? {$null -eq $_.Initializer} | % {"$($ShaderType)_forgot_to_set_$($ComboSet)_$($_.Name)"}
     ))
 
     if($Result -eq "") { $Result = "0" }
@@ -258,9 +266,13 @@ function Generate-ComboInitChecker([System.Collections.Specialized.OrderedDictio
     $Result
 }
 
-function Generate-ComboHelperCtor([string]$Class, [System.Collections.Specialized.OrderedDictionary]$Combos) {
-
-    "    $Class( IShaderShadow *pShaderShadow, IMaterialVar **params ) {"
+function Generate-ComboHelperCtor([string]$Class, [System.Collections.Specialized.OrderedDictionary]$Combos, [boolean]$IsDynamic) {
+    if($IsDynamic) {
+        "    $Class( IShaderDynamicAPI *pShaderAPI ) {"
+    } else {
+        "    $Class( IShaderShadow *pShaderShadow, IMaterialVar **params ) {"
+    }
+    
     
     $Combos.Values | ? { $null -ne $_.Initializer} | % {
         "        _$($_.Name) = $($_.Initializer);"
@@ -276,7 +288,7 @@ function Generate-StaticComboHelper(
     [System.Collections.Specialized.OrderedDictionary]$Dynamics,
     [string]$ShaderType) {
 
-    $Class = "$($ShaderName)_Static_Index"
+    $Class = "$($ShaderName.ToLower())_Static_Index"
     $Scale = 1
 
     @"
@@ -284,7 +296,7 @@ class $Class {
 "@
     $Statics.Values | % { Generate-ComboVar $_ }
     "public:`n"
-    Generate-ComboHelperCtor $Class $Statics
+    Generate-ComboHelperCtor $Class $Statics $false
     @"
 
     int GetIndex() {
@@ -306,9 +318,9 @@ class $Class {
     @"
         return value;
     }
-}
+};
 
-#define shaderStaticTest_$ShaderName $(Generate-ComboInitChecker $Statics -ComboSet "static" $ShaderType)
+#define shaderStaticTest_$($ShaderName.ToLower()) $(Generate-ComboInitChecker $Statics -ComboSet "static" $ShaderType)
 "@
 }
 
@@ -317,7 +329,7 @@ function Generate-DynamicComboHelper(
     [System.Collections.Specialized.OrderedDictionary]$Dynamics,
     [string]$ShaderType) {
 
-    $Class = "$($ShaderName)_Dynamic_Index"
+    $Class = "$($ShaderName.ToLower())_Dynamic_Index"
     $Scale = 1
     
     @"
@@ -325,7 +337,7 @@ class $Class {
 "@
     $Dynamics.Values | % { Generate-ComboVar $_ }
     "public:`n"
-    Generate-ComboHelperCtor $Class $Dynamics
+    Generate-ComboHelperCtor $Class $Dynamics $true
     @"
 
     int GetIndex() {
@@ -345,9 +357,9 @@ class $Class {
     @"
         return value;
     }
-}
+};
 
-#define shaderDynamicTest_$ShaderName $(Generate-ComboInitChecker $Dynamics -ComboSet "static" $ShaderType)
+#define shaderDynamicTest_$($ShaderName.ToLower()) $(Generate-ComboInitChecker $Dynamics -ComboSet "dynamic" $ShaderType)
 "@
 }
 
@@ -359,28 +371,21 @@ function Generate-ShaderCppHeader(
 
     [int64]$NumCombos = 1
     foreach($St in $Statics.Values) { $NumCombos *= ($St.Max - $St.Min + 1) }
-    foreach($Dyn in $Dynamics.Values) { $NumCombos *= ($St.Max - $St.Min + 1) }
+    foreach($Dyn in $Dynamics.Values) { $NumCombos *= ($Dyn.Max - $Dyn.Min + 1) }
 
     $ShaderName = [Path]::GetFileNameWithoutExtension($Comp.CompileAs)
     $ShaderType = Get-ShaderType-ComboInitChecker($Comp.CompileAs_ShaderModel)
 
     #Write-Host $NumCombos
     $TooManyCombos = $NumCombos -gt [int32]::MaxValue
+    if($TooManyCombos) {
+        throw "Shader combo amount not fits into positive int32 (amount $NumCombos > $([int32]::MaxValue), shader $($Comp.CompileAs))"
+    }
 
     @"
 #include "shaderlib/cshader.h"
 
 
-"@
-
-    if($TooManyCombos) {
-        Write-Host "!WARNING: Shader combo amount not fits into positive int32 (amount $NumCombos > $([int32]::MaxValue), shader $($Comp.CompileAs))"
-        @"
-#warning "Combo amount of shader $($Comp.CompileAs) is greater than max int32!"
-"@
-    }
-
-    @" 
 // This shader has $NumCombos combos total, $($Statics.Count) statics and $($Dynamics.Count) dynamics.
 // List of SKIPs that affect this shader:
 "@
@@ -439,6 +444,9 @@ function Build-ShadersFromFile([FileInfo]$File, [boolean]$ForceModel3_0) {
     }
 }
 
+#Build-ShadersFromFile(".\materialsystem\stdshaders\stdshader_dx9_test.txt")
+#Build-ShadersFromFile ".\materialsystem\stdshaders\stdshader_dx9_test.txt" $true
+#return;
 
 Write-Host "Started building all shaders"
 

@@ -146,7 +146,7 @@ abstract_class IShaderDynamicAPI
 {
 public:
 
-	virtual void BeginPerfEEvent( wchar* name ) {}
+	virtual void BeginPerfEEvent(wchar const* name) {}
 	virtual void EndPerfEvent() {}
 	virtual void SetVertexShaderViewProj() = 0;
 	virtual void UpdateVertexShaderMatrix( int m ) = 0;
