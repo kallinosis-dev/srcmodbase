@@ -62,10 +62,11 @@ function Parse-ShaderFileLine([string]$Line, [hashtable]$ShaderModelMapping) {
 #return;
 
 # Based on LoadShaderListFile from valve_perl_helpers.pl
-function Parse-ShaderFile([FileInfo]$File, [switch]$ForceModel3_0) {
+function Parse-ShaderFile([FileInfo]$File, [boolean]$ForceModel3_0) {
     $InShaders = Get-Content -Path $File.FullName `
         | % { $_ -ireplace "\/\/.*$","" -replace "\s*",""} `
         | ? { $_ -ne "" }
+
 
     $ShaderModelMapping = If ($ForceModel3_0) { $ShaderModelMapping_Force3_0 } else { $ShaderModelMapping }
 
@@ -117,7 +118,7 @@ function Parse-ShaderParamModifiers([string]$ParamsAndConds, [ShaderCompilation]
 
                 continue
             }
-            "\s*=\s*(.+?)\s*" {
+            "\s*=\s*(.+)\s*" {
                 if($null -ne $Initializer) {
                     return $null, "Multiple initializers ([= any_cpp_expr]) are not supported"
                 }
@@ -218,10 +219,10 @@ public:
 #ifdef _DEBUG
         bool $CheckVar = true;
 #endif
-    }
 "@ 
     }
     @"
+    }
     void Set$Name(bool value) { Set$Name(value ? 1 : 0); }
 "@
 }
@@ -282,7 +283,7 @@ function Generate-StaticComboHelper(
 class $Class {
 "@
     $Statics.Values | % { Generate-ComboVar $_ }
-    "public:\n"
+    "public:`n"
     Generate-ComboHelperCtor $Class $Statics
     @"
 
@@ -323,7 +324,7 @@ function Generate-DynamicComboHelper(
 class $Class {
 "@
     $Dynamics.Values | % { Generate-ComboVar $_ }
-    "public:\n"
+    "public:`n"
     Generate-ComboHelperCtor $Class $Dynamics
     @"
 
@@ -364,15 +365,22 @@ function Generate-ShaderCppHeader(
     $ShaderType = Get-ShaderType-ComboInitChecker($Comp.CompileAs_ShaderModel)
 
     #Write-Host $NumCombos
+    $TooManyCombos = $NumCombos -gt [int32]::MaxValue
 
-    if($NumCombos -gt [int32]::MaxValue) {
-        throw "Shader combo amount not fits into positive int32 (amount $NumCombos > $([int32]::MaxValue), shader $($Comp.CompileAs))"
-    }
-
-    
-    @" 
+    @"
 #include "shaderlib/cshader.h"
 
+
+"@
+
+    if($TooManyCombos) {
+        Write-Host "!WARNING: Shader combo amount not fits into positive int32 (amount $NumCombos > $([int32]::MaxValue), shader $($Comp.CompileAs))"
+        @"
+#warning "Combo amount of shader $($Comp.CompileAs) is greater than max int32!"
+"@
+    }
+
+    @" 
 // This shader has $NumCombos combos total, $($Statics.Count) statics and $($Dynamics.Count) dynamics.
 // List of SKIPs that affect this shader:
 "@
@@ -384,7 +392,7 @@ function Generate-ShaderCppHeader(
     Generate-DynamicComboHelper $ShaderName $Dynamics $ShaderType
 }
 
-function Build-ShadersFromFile([FileInfo]$File, [switch]$ForceModel3_0) {
+function Build-ShadersFromFile([FileInfo]$File, [boolean]$ForceModel3_0) {
     $ShaderCompilations = Parse-ShaderFile $File $ForceModel3_0
 
     New-Item -ItemType Directory -Path "$ShaderFolder\fxctmp9" -Force | Out-Null
@@ -436,7 +444,7 @@ Write-Host "Started building all shaders"
 
 Build-ShadersFromFile(".\materialsystem\stdshaders\stdshader_dx9_20b.txt")
 Build-ShadersFromFile(".\materialsystem\stdshaders\stdshader_dx9_20b_new.txt") # -dx9_30
-Build-ShadersFromFile(".\materialsystem\stdshaders\stdshader_dx9_30.txt") -ForceModel3_0 # -dx9_30	-force30
+Build-ShadersFromFile ".\materialsystem\stdshaders\stdshader_dx9_30.txt" $true # -dx9_30	-force30
 #Build-ShadersFromFile(".\materialsystem\stdshaders\stdshader_dx10.txt") # -dx10
 
 Write-Host "Finished building all shaders"
