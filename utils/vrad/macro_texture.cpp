@@ -84,9 +84,9 @@ void InitMacroTexture( const char *pBSPFilename )
 {
 	// Get the world bounds (same ones used by minimaps and level designers know how to use).
 	int i = 0;
-	for (i; i < num_entities; ++i)
+	for (; i < num_entities; ++i)
 	{
-		char* pEntity = ValueForKey(&entities[i], "classname");
+		char const* pEntity = ValueForKey(&entities[i], "classname");
 		if( !strcmp(pEntity, "worldspawn") )
 		{
 			GetVectorForKey( &entities[i], "world_mins", g_MacroWorldMins );

@@ -33,7 +33,7 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CVRadDLL, ILaunchableDLL, LAUNCHABLE_DLL_INTE
 class dat
 {
 public:
-	char *name;
+	char const* name;
 	int size;
 };
 #define DATENTRY(name) {#name, sizeof(name)}
@@ -107,7 +107,7 @@ int g_TotalDatSize = CalcDatSize();
 
 
 
-int CVRadDLL::main( int argc, char **argv )
+int CVRadDLL::main(int argc, char const* const* argv)
 {
 	return VRAD_Main( argc, argv );
 }

@@ -2279,7 +2279,8 @@ void CVradStaticPropMgr::ComputeLighting( int iThread )
 		VMPI_SetCurrentStage( "CVradStaticPropMgr::ComputeLighting" );
 		
 		DistributeWork( 
-			count, 
+			count,
+			VMPI_DISTRIBUTEWORK_PACKETID,
 			&CVradStaticPropMgr::VMPI_ProcessStaticProp_Static, 
 			&CVradStaticPropMgr::VMPI_ReceiveStaticPropResults_Static );
 	}

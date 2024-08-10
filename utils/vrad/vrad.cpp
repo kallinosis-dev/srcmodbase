@@ -368,26 +368,22 @@ MAKE FACES
 WindingFromFace
 =============
 */
-winding_t	*WindingFromFace (dface_t *f, Vector& origin )
+winding_t	*WindingFromFace (const dface_t *f, Vector const& origin )
 {
-	int			i;
-	int			se;
-	dvertex_t	*dv;
 	int			v;
-	winding_t	*w;
 
-	w = AllocWinding (f->numedges);
+	winding_t* w = AllocWinding(f->numedges);
 	w->numpoints = f->numedges;
 
-	for (i=0 ; i<f->numedges ; i++)
+	for (int i = 0 ; i<f->numedges ; i++)
 	{
-		se = dsurfedges[f->firstedge + i];
+		int se = dsurfedges[f->firstedge + i];
 		if (se < 0)
 			v = dedges[-se].v[1];
 		else
 			v = dedges[se].v[0];
 
-		dv = &dvertexes[v];
+		dvertex_t* dv = &dvertexes[v];
 		VectorAdd (dv->point, origin, w->p[i]);
 	}
 
@@ -672,15 +668,13 @@ void MakePatchForFace (int fn, winding_t *w)
 
 entity_t *EntityForModel (int modnum)
 {
-	int		i;
-	char	*s;
 	char	name[16];
 
 	sprintf (name, "*%i", modnum);
 	// search the entities for one using modnum
-	for (i=0 ; i<num_entities ; i++)
+	for (int i = 0 ; i<num_entities ; i++)
 	{
-		s = ValueForKey (&entities[i], "model");
+		char const* s = ValueForKey(&entities[i], "model");
 		if (!strcmp (s, name))
 			return &entities[i];
 	}
@@ -1335,11 +1329,9 @@ void WriteWorld (char *name, int iBump)
 	g_pFileSystem->Close( out );
 }
 
-void WriteRTEnv (char *name)
+void WriteRTEnv (char const* name)
 {
-	FileHandle_t out;
-
-	out = g_pFileSystem->Open( name, "w" );
+	FileHandle_t out = g_pFileSystem->Open(name, "w");
 	if (!out)
 		Error ("Couldn't open %s", name);
 
@@ -1365,10 +1357,8 @@ void WriteRTEnv (char *name)
 
 void WriteWinding (FileHandle_t out, winding_t *w, Vector& color )
 {
-	int			i;
-
 	CmdLib_FPrintf (out, "%i\n", w->numpoints);
-	for (i=0 ; i<w->numpoints ; i++)
+	for (int i = 0 ; i<w->numpoints ; i++)
 	{
 		CmdLib_FPrintf (out, "%5.2f %5.2f %5.2f %5.3f %5.3f %5.3f\n",
 			w->p[i][0],
@@ -2446,7 +2436,7 @@ void VRAD_Init()
 }
 
 
-int ParseCommandLine( int argc, char **argv, bool *onlydetail )
+int ParseCommandLine(int argc, char const* const* argv, bool *onlydetail)
 {
 	*onlydetail = false;
 
@@ -3034,7 +3024,7 @@ void PrintUsage(int argc, char const* const* argv)
 }
 
 
-int RunVRAD( int argc, char **argv )
+int RunVRAD(int argc, char const* const* argv)
 {
 #if defined(_MSC_VER) && ( _MSC_VER >= 1310 )
 	Msg("Valve Software - vrad.exe SSE (" __DATE__ ")\n" );
@@ -3074,7 +3064,7 @@ int RunVRAD( int argc, char **argv )
 }
 
 
-int VRAD_Main(int argc, char **argv)
+int VRAD_Main(int argc, char const* const* argv)
 {
 	g_pFileSystem = nullptr;	// Safeguard against using it before it's properly initialized.
 

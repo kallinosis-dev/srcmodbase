@@ -646,7 +646,7 @@ void ComputePerLeafAmbientLighting()
 	{
 		// Distribute the work among the workers.
 		VMPI_SetCurrentStage( "ComputeLeafAmbientLighting" );
-		DistributeWork( numleafs, VMPI_ProcessLeafAmbient, VMPI_ReceiveLeafAmbientResults );
+		DistributeWork( numleafs, VMPI_DISTRIBUTEWORK_PACKETID, VMPI_ProcessLeafAmbient, VMPI_ReceiveLeafAmbientResults );
 	}
 	else
 	{

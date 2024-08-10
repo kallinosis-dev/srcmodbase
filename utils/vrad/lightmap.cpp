@@ -1027,14 +1027,11 @@ int				numdlights;
   FindTargetEntity
   ==================
 */
-entity_t *FindTargetEntity (char *target)
+entity_t *FindTargetEntity (const char *target)
 {
-	int		i;
-	char	*n;
-
-	for (i=0 ; i<num_entities ; i++)
+	for (int i = 0 ; i<num_entities ; i++)
 	{
-		n = ValueForKey (&entities[i], "targetname");
+		char const* n = ValueForKey(&entities[i], "targetname");
 		if (!strcmp (n, target))
 			return &entities[i];
 	}
@@ -1054,11 +1051,9 @@ int GetVisCache( int lastoffset, int cluster, byte *pvs );
 void SetDLightVis( directlight_t *dl, int cluster );
 void MergeDLightVis( directlight_t *dl, int cluster );
 
-directlight_t *AllocDLight( Vector& origin, bool bAddToList )
+directlight_t *AllocDLight(const Vector& origin, bool bAddToList )
 {
-	directlight_t *dl;
-
-	dl = ( directlight_t* )calloc(1, sizeof(directlight_t));
+	directlight_t* dl = (directlight_t*)calloc(1, sizeof(directlight_t));
 	dl->index = numdlights++;
 
 	VectorCopy( origin, dl->light.origin );
@@ -1133,27 +1128,24 @@ void MergeDLightVis( directlight_t *dl, int cluster )
   LightForKey
   =============
 */
-int LightForKey (entity_t *ent, char *key, Vector& intensity )
+int LightForKey (entity_t *ent, const char *key, Vector& intensity )
 {
-	char *pLight;
-
-	pLight = ValueForKey( ent, key );
+	char const* pLight = ValueForKey(ent, key);
 
 	return LightForString( pLight, intensity );
 }
 
-int LightForString( char *pLight, Vector& intensity )
+int LightForString(char const* pLight, Vector& intensity)
 {
 	double r, g, b, scaler;
-	int argCnt;
 
 	VectorFill( intensity, 0 );
 
 	// scanf into doubles, then assign, so it is vec_t size independent
 	r = g = b = scaler = 0;
 	double r_hdr,g_hdr,b_hdr,scaler_hdr;
-	argCnt = sscanf ( pLight, "%lf %lf %lf %lf %lf %lf %lf %lf", 
-					  &r, &g, &b, &scaler, &r_hdr,&g_hdr,&b_hdr,&scaler_hdr );
+	int argCnt = sscanf(pLight, "%lf %lf %lf %lf %lf %lf %lf %lf",
+	                    &r, &g, &b, &scaler, &r_hdr, &g_hdr, &b_hdr, &scaler_hdr);
 
 	if (argCnt==8) 											// 2 4-tuples
 	{
@@ -1212,10 +1204,6 @@ int LightForString( char *pLight, Vector& intensity )
 
 static void ParseLightGeneric( entity_t *e, directlight_t *dl )
 {
-	entity_t		*e2;
-	char	        *target;
-	Vector	        dest;
-
 	dl->light.style = (int)FloatForKey (e, "style");
 	dl->m_bSkyLightIsDirectionalLight = false;
 
@@ -1242,15 +1230,17 @@ static void ParseLightGeneric( entity_t *e, directlight_t *dl )
 	}
 	
 	// check angle, targets
-	target = ValueForKey (e, "target");
+	char const* target = ValueForKey(e, "target");
 	if (target[0])
-	{	// point towards target
-		e2 = FindTargetEntity (target);
+	{
+		// point towards target
+		entity_t* e2 = FindTargetEntity(target);
 		if (!e2)
 			Warning("WARNING: light at (%i %i %i) has missing target\n",
 					(int)dl->light.origin[0], (int)dl->light.origin[1], (int)dl->light.origin[2]);
 		else
 		{
+			Vector dest;
 			GetVectorForKey (e2, "origin", dest);
 			VectorSubtract (dest, dl->light.origin, dl->light.normal);
 			VectorNormalize (dl->light.normal);
@@ -1582,11 +1572,9 @@ void BuildVisForLightEnvironment( int nNumLights, directlight_t** pLights )
 	}
 }
 
-static char *ValueForKeyWithDefault (entity_t *ent, char *key, char *default_value = nullptr)
+static char const* ValueForKeyWithDefault (const entity_t *ent, const char *key, char const* default_value = nullptr)
 {
-	epair_t	*ep;
-	
-	for (ep=ent->epairs ; ep ; ep=ep->next)
+	for (epair_t* ep = ent->epairs ; ep ; ep=ep->next)
 		if (!strcmp (ep->key, key) )
 			return ep->value;
 	return default_value;
@@ -1602,8 +1590,7 @@ static void ParseLightEnvironment( entity_t* e, directlight_t* dl )
 
 	if ( !gSkyLight )
 	{
-		char *angle_str=ValueForKeyWithDefault( e, "SunSpreadAngle" );
-		if (angle_str)
+		if (char const* angle_str=ValueForKeyWithDefault( e, "SunSpreadAngle" ))
 		{
 			g_SunAngularExtent=atof(angle_str);
 			g_SunAngularExtent=sin((M_PI/180.0)*g_SunAngularExtent);
@@ -1654,8 +1641,7 @@ static void ParseLightDirectional( entity_t* e, directlight_t* dl )
 
 	ParseLightGeneric( e, dl );
 
-	char *angle_str=ValueForKeyWithDefault( e, "SunSpreadAngle" );
-	if (angle_str)
+	if (char const* angle_str=ValueForKeyWithDefault( e, "SunSpreadAngle" ))
 	{
 		dl->m_flSkyLightSunAngularExtent = atof(angle_str);
 		dl->m_flSkyLightSunAngularExtent = sin((M_PI/180.0)*dl->m_flSkyLightSunAngularExtent);
@@ -1692,13 +1678,13 @@ static void ParseLightPoint( entity_t* e, directlight_t* dl )
   =============
 */
 #define DIRECT_SCALE (100.0*100.0)
-void CreateDirectLights (void)
+void CreateDirectLights ()
 {
 	unsigned        i;
 	CPatch	        *p = nullptr;
 	directlight_t	*dl = nullptr;
 	entity_t	    *e = nullptr;
-	char	        *name;
+	char const* name;
 	Vector	        dest;
 
 	numdlights = 0;

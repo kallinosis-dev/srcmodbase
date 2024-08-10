@@ -61,7 +61,7 @@ class IVRadDLL
 {
 public:
 	// All vrad.exe does is load the VRAD DLL and run this.
-	virtual int			main( int argc, char **argv ) = 0;
+	virtual int			main(int argc, char const* const* argv) = 0;
 	
 	
 	// Load the BSP file into memory.
