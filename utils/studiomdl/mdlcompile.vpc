@@ -178,6 +178,6 @@ $Project "mdlcompile"
 		$Lib	tier1
 		$Lib	tier2
 		$Lib	tier3
-		$Lib	fbxutils
+		//$Lib	fbxutils //Temporally disabled
 	}
 }

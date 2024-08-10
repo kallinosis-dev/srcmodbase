@@ -409,8 +409,8 @@ $Group "everything"
 	//"worldobjects"
 	"localize"
 	"zlib"
-	"fbxutils"
-	"fbx2dmx"
+	//"fbxutils" //Temporally disabled
+	//"fbx2dmx" //Temporally disabled
 	"protobuf"
 	"protoc"
 	"utf8_range"
