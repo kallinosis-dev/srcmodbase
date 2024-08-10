@@ -70,17 +70,8 @@ enum CompiledVtfFlags
 
 	TEXTUREFLAGS_BORDER						   = 0x20000000,	// Clamp to border color on all texture coordinates
 
-#if defined( _PS3 ) || defined SPU
-	// PS3 extensions
-	TEXTUREFLAGS_QUINCUNX                      = 0x40000000,
-	TEXTUREFLAGS_QUINCUNX_ALT                  = 0x80000000,					
-#elif defined( _X360 )
-	TEXTUREFLAGS_ALIAS_COLOR_AND_DEPTH_SURFACES = 0x40000000,
-	TEXTUREFLAGS_UNUSED_80000000		   = 0x80000000,
-#else
 	TEXTUREFLAGS_UNUSED_40000000		   = 0x40000000,
 	TEXTUREFLAGS_UNUSED_80000000		   = 0x80000000,
-#endif
 };
 
 enum VersionedVtfFlags
