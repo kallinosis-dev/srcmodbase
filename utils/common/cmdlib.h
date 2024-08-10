@@ -83,7 +83,7 @@ int	FileTime (char *path);
 
 void	Q_mkdir( char *path );
 
-char *ExpandArg (char *path);	// expand relative to CWD
+char *ExpandArg (const char *path);	// expand relative to CWD
 char *ExpandPath (char *path);	// expand relative to gamedir
 
 char *ExpandPathAndArchive (char *path);

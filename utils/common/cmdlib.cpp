@@ -524,7 +524,7 @@ static void CmdLib_getwd( char *out, int outSize )
 	Q_FixSlashes( out );
 }
 
-char *ExpandArg( char *path )
+char *ExpandArg(const const char *path )
 {
 	static char full[ 1024 ];
 

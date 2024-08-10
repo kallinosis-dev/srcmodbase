@@ -1158,7 +1158,7 @@ void PrintCommandLine(int argc, char const* const* argv)
 }
 
 
-int RunVBSP( int argc, char **argv )
+int RunVBSP(int argc, char const* const* argv)
 {
 	int		i;
 	double		start, end;
