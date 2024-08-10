@@ -2859,7 +2859,7 @@ static CDmePrecompiledTexture *LoadConfigFile( const char *pFullPath, BitmapFile
 		{
 			if ( bConfigFileSpecified )
 			{
-				char *pTestExt[3] = { ".tga", ".pfm", ".psd" };
+				char const* pTestExt[3] = { ".tga", ".pfm", ".psd" };
 				char pTestFileTest[ MAX_PATH ];
 				char pTestFile[ MAX_PATH ];
 				Q_strncpy( pTestFile, pFullPath, sizeof(pTestFile) );
@@ -3747,7 +3747,7 @@ bool CSuggestGameDirHelper::MySuggestFn( CFSSteamSetupInfo const *pFsSteamSetupI
 	return false;
 }
 
-int CVTex::VTex( int argc, char **argv )
+int CVTex::VTex(int argc, char const* const* argv)
 {
 	CommandLine()->CreateCmdLine( argc, argv );
 
@@ -3765,8 +3765,7 @@ int CVTex::VTex( int argc, char **argv )
 
 	g_UseGameDir = true; // make sure this is initialized to true.
 
-	int i;
-	i = 1;
+	int i = 1;
 	while( i < argc )
 	{
 		if( stricmp( argv[i], "-quiet" ) == 0 )
