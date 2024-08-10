@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2008, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2008, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Loads mesh data from dmx files
 //
@@ -54,7 +54,10 @@
 #include "mdlobjects/dmeboneflexdriver.h"
 #include "mdlobjects/dmejigglebone.h"
 #include "mdlobjects/dmemouth.h"
+
+#ifdef FBX_SUPPORTED
 #include "fbxutils/dmfbxserializer.h"
+#endif
 
 #include "mdlobjects/mpp_utils.h"
 
@@ -4746,7 +4749,6 @@ static void SetupStaticProp( s_source_t *pSource )
 //-----------------------------------------------------------------------------
 int Load_DMX( s_source_t *pSource )
 {
-	DmFileId_t fileId;
 
 	// use the full search tree, including mod hierarchy to find the file
 	char pFullPath[MAX_PATH];
@@ -4777,7 +4779,10 @@ int Load_DMX( s_source_t *pSource )
 	CDmeCombinationOperator *pCombinationOperator = pRoot->GetValueElement< CDmeCombinationOperator >( "combinationOperator" );
 	BoneTransformMap_t boneMap;
 	if ( !LoadModelAndSkeleton( pSource, boneMap, pSkeleton, pModel, pCombinationOperator, false ) )
-		goto dmxError;
+	{
+		g_pDataModel->RemoveFileId(pRoot->GetFileId());
+		return 0;
+	}
 
 	LoadQcModelElements( pSource, g_pCurrentModel, pModel );
 
@@ -4787,17 +4792,11 @@ int Load_DMX( s_source_t *pSource )
 		LoadAnimations( pSource, pAnimationList, g_currentscale, boneMap );
 	}
 
-	fileId = pRoot->GetFileId();
-	g_pDataModel->RemoveFileId( fileId );
+	g_pDataModel->RemoveFileId(pRoot->GetFileId());
 	return 1;
-
-dmxError:
-	fileId = pRoot->GetFileId();
-	g_pDataModel->RemoveFileId( fileId );
-	return 0;
 }
 
-
+#ifdef FBX_SUPPORTED
 //-----------------------------------------------------------------------------
 // Main entry point for loading FBX files
 //-----------------------------------------------------------------------------
@@ -4851,6 +4850,7 @@ int Load_FBX( s_source_t *pSource )
 
 	return nReturn;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Declare it so we can call it, defined in studiomdl.cpp
@@ -4866,6 +4866,9 @@ bool LoadPreprocessedFile( const char *pFileName, float flScale )
 #ifndef MDLCOMPILE
 	return false;
 #else
+
+	int nSequenceCount;
+
 	DmFileId_t fileId;
 
 	// use the full search tree, including mod hierarchy to find the file
@@ -4974,7 +4977,7 @@ bool LoadPreprocessedFile( const char *pFileName, float flScale )
 	LoadAnimBlockSize( pRoot->GetValueElement< CDmeAnimBlockSize >( "animBlockSize" ) );
 
 	// Deal with sequences.  Ok to pass NULL for CDmeSequenceList
-	const int nSequenceCount = LoadAndCreateSequences( pMainSource, pRoot->GetValueElement< CDmeSequenceList >( "sequenceList" ), bSetUpAxis );
+	nSequenceCount = LoadAndCreateSequences( pMainSource, pRoot->GetValueElement< CDmeSequenceList >( "sequenceList" ), bSetUpAxis );
 	if ( nSequenceCount == 0 && !pBodyGroupList )
 	{
 		MdlError( "0003: MPP has no body groups and no animations\n" );

@@ -9,21 +9,20 @@ $Macro OUTBINDIR	"$SRCDIR\..\game\bin"
 
 $Include "$SRCDIR\vpc_scripts\source_exe_con_base.vpc"
 
-$Include "$SRCDIR\vpc_scripts\fbx.vpc"
+//$Include "$SRCDIR\vpc_scripts\fbx.vpc" //Temporally disabled
 
 $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories		"$BASE,..\common,..\nvtristriplib,$SRCDIR\Game_Shared,$SRCDIR\ps3sdk\cell\host-common\include,$SRCDIR\ps3sdk\cell\target\common\include"
+		$AdditionalIncludeDirectories		"$BASE,..\common,..\nvtristriplib,$SRCDIR\Game_Shared"
 
 		$PreprocessorDefinitions			"$BASE;PROTECTED_THINGS_DISABLE;MDLCOMPILE"
 	}
 
 	$Linker
 	{
-		$AdditionalDependencies			"$BASE winmm.lib libedgegeomtool.Release.Win32.vs8.lib"
-		$AdditionalLibraryDirectories   	"$BASE;$SRCDIR\ps3sdk\cell\host-win32\lib"
+		$AdditionalDependencies			"$BASE winmm.lib"
 	}
 }
 

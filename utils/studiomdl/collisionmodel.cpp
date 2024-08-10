@@ -2221,7 +2221,7 @@ void ParseCollisionCommands( CJointedModel &joints )
 		else if ( !stricmp( command, "$jointconstrain" ) )
 		{
 			argCount = ReadArgs( args, 6 );
-			char *pFriction = args[5];
+			char const* pFriction = args[5];
 			if ( argCount < 6 )
 			{
 				pFriction = "1.0";

@@ -13,6 +13,7 @@
 #pragma once
 #endif
 
+#error "FBX support is temporally disabled"
 
 // FBX includes
 #include <fbxsdk.h>

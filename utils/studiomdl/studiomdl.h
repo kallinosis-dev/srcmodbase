@@ -143,9 +143,9 @@ public:
 template< typename T >
 inline T& CUtlVectorAuto<T>::operator[]( int i )
 {
-	EnsureCount( i + 1 );
-	Assert( IsValidIndex(i) );
-	return Base()[i];
+	this->EnsureCount( i + 1 );
+	Assert(this->IsValidIndex(i) );
+	return this->Base()[i];
 }
 
 
@@ -1572,7 +1572,9 @@ int Load_SMD( s_source_t *psource );
 int Load_VTA( s_source_t *psource );
 int Load_OBJ( s_source_t *psource );
 int Load_DMX( s_source_t *psource );
+#ifdef FBX_SUPPORTED
 int Load_FBX( s_source_t *psource );
+#endif
 bool LoadPreprocessedFile( const char *pFileName, float flScale );
 int AppendVTAtoOBJ( s_source_t *psource, char *filename, int frame );
 void Build_Reference( s_source_t *psource, const char *pAnimName );
@@ -1880,8 +1882,8 @@ unsigned short IsUShort( int val );
 
 struct MDLCommand_t
 {
-	char *m_pName;
-	void (*m_pCmd)();
+	char const* m_pName;
+	void (*const m_pCmd)();
 	int m_nLastValidVersion;
 };
 

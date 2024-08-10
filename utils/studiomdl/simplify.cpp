@@ -8362,7 +8362,7 @@ static void CompressAnimations( )
 
 				if (g_bCheckLengths)
 				{
-					char *tmp[6] = { "X", "Y", "Z", "XR", "YR", "ZR" };
+					char const* tmp[6] = { "X", "Y", "Z", "XR", "YR", "ZR" };
 					n = 0;
 					float s = 0.0f;
 					for (k = 0; k < 6; k++)

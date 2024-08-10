@@ -9,6 +9,7 @@
 #include "mdlobjects/clothproxymesh.h"
 #include "movieobjects/dmefaceset.h"
 #include "meshutils/mesh.h"
+#include "movieobjects/dmemesh.h"
 #include "movieobjects/dmemeshtypes.h"
 
 class CDmeModel;
@@ -238,7 +239,7 @@ private:
 
 
 template <typename Functor >
-inline void EnumerateFaces( CDmeMesh *pDmeMesh, CDmeVertexData * pBindState, const CVarBitVec *pUsefulDmeVerts, Functor &fn )
+inline void EnumerateFaces(CDmeMesh *pDmeMesh, CDmeVertexData * pBindState, const CVarBitVec *pUsefulDmeVerts, Functor const& fn)
 {
 	//const CUtlVector< Vector > & arrDmeVert = pBindState->GetPositionData();// the most original and un-split position array
 	const CUtlVector< int > & arrVertIndex = pBindState->GetVertexIndexData( CDmeVertexDataBase::FIELD_POSITION );

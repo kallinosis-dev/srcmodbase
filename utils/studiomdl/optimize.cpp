@@ -128,7 +128,7 @@ namespace OptimizedModel
 
 	struct Strip_t
 	{
-		Strip_t::Strip_t()
+		Strip_t()
 		{
 			numIndices = numTopologyIndices = 0;
 		}
@@ -372,7 +372,7 @@ namespace OptimizedModel
 		// Memory optimize the strip data
 		void PostProcessStripGroup( mstudiomodel_t *pStudioModel, mstudiomesh_t *pStudioMesh, StripGroup_t *pStripGroup );
 
-		void COptimizedModel::ZeroNumBones( void );
+		void ZeroNumBones( void );
 
 		//
 		// Methods associated with writing VTX files

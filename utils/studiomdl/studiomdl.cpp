@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2008, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2008, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -70,7 +70,11 @@
 #include "KeyValues.h"
 #include "compileclothproxy.h"
 #include "movieobjects/dmemodel.h"
+
+#ifdef FBX_SUPPORTED
 #include "fbxutils/dmfbxserializer.h"
+#endif
+
 #include "mathlib/dynamictree.h"
 #include "movieobjects/dmemesh.h"
 #include "tier1/fmtstr.h"
@@ -327,7 +331,7 @@ void TokenError( const char *fmt, ... )
 void MdlError( const char *fmt, ... )
 {
 	static char output[1024];
-	static char *knownExtensions[] = {".mdl", ".ani", ".phy", ".sw.vtx", ".dx80.vtx", ".dx90.vtx", ".vvd"};
+	static char const* knownExtensions[] = {".mdl", ".ani", ".phy", ".sw.vtx", ".dx80.vtx", ".dx90.vtx", ".vvd"};
 	char		fileName[MAX_PATH];
 	char		baseName[MAX_PATH];
 	va_list		args;
@@ -3737,10 +3741,34 @@ s_source_t *Load_Source( const char *name, const char *ext, bool reverse, bool i
 	pSource->scale = 1.0f;
 	pSource->rotation = g_defaultrotation;
 
-	const char * load_extensions[] = { "fbx", "vrm", "dmx", "mpp", "smd", "sma", "phys", "vta", "obj", "xml", "fbx" };
-	int( *load_procs[] )( s_source_t * ) = { Load_FBX, Load_VRM, Load_DMX, Load_DMX, Load_SMD, Load_SMD, Load_SMD, Load_VTA, Load_OBJ, Load_DMX, Load_FBX };
+	const char * load_extensions[] = {
+#ifdef FBX_SUPPORTED
+		"fbx",
+#endif
+		"vrm", "dmx", "mpp", "smd", "sma", "phys", "vta", "obj", "xml"
+#ifdef FBX_SUPPORTED
+		, "fbx"
+#endif
+	};
+	int( *load_procs[] )( s_source_t * ) = {
+#ifdef FBX_SUPPORTED
+		Load_FBX,
+#endif
+		Load_VRM, Load_DMX, Load_DMX, Load_SMD, Load_SMD, Load_SMD, Load_VTA, Load_OBJ, Load_DMX
+#ifdef FBX_SUPPORTED
+		, Load_FBX
+#endif
+	};
    	COMPILE_TIME_ASSERT( ARRAYSIZE(load_extensions) == ARRAYSIZE(load_procs) );
-	for ( int kk = ( g_bPreferFbx ? 0 : 1 ); kk < ARRAYSIZE( load_extensions ); ++ kk )
+
+	int first_index =
+#ifdef FBX_SUPPORTED
+		g_bPreferFbx ? 0 : 1;
+#else
+		0;
+#endif
+
+	for ( int kk = first_index; kk < ARRAYSIZE( load_extensions ); ++ kk )
 	{
 		if ( ( !result && xext[0] == '\0' ) || Q_stricmp( xext, load_extensions[kk] ) == 0)
 		{
@@ -6284,7 +6312,7 @@ void Option_VertexCacheAnimationFile( char *pszVtaFile, int nModelIndex )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void Option_Flex( char *name, char *vtafile, int imodel, float pairsplit )
+void Option_Flex( char const* name, char const* vtafile, int imodel, float pairsplit )
 {
 	if (g_numflexkeys >= MAXSTUDIOFLEXKEYS)
 	{
@@ -12165,7 +12193,7 @@ bool CStudioMDLApp::ParseArguments()
 void AddContentPaths( )
 {
 	// look for the "content" in the path to the initial QC file
-	char *match = "content\\";
+	char const* match = "content\\";
 	char *sp = strstr( qdir, match );
 	if (!sp)
 		return;
@@ -12282,7 +12310,7 @@ int CStudioMDLApp::Main()
 
 	// look for the "content\hl2x" string in the qdir and add what should be the correct path as an alternate
 	// FIXME: add these to an envvar if folks are using complicated directory mappings instead of defaults
-	char *match = "content\\hl2x\\";
+	char const* match = "content\\hl2x\\";
 	char *sp = strstr( qdir, match );
 	if (sp)
 	{
