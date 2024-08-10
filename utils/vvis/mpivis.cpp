@@ -105,7 +105,7 @@ bool VVIS_DispatchFn( MessageBuffer *pBuf, int iSource, int iPacketID )
 	}
 }
 CDispatchReg g_VVISDispatchReg( VMPI_VVIS_PACKET_ID, VVIS_DispatchFn ); // register to handle the messages we want
-
+CDispatchReg g_DistributeWorkReg(VMPI_DISTRIBUTEWORK_PACKETID, DistributeWorkDispatch);
 
 
 void VMPI_DeletePortalMCSocket()
@@ -221,6 +221,7 @@ void RunMPIBasePortalVis()
 	g_CPUTime.Init();
 	double elapsed = DistributeWork( 
 		g_numportals * 2,		// # work units
+		VMPI_DISTRIBUTEWORK_PACKETID,
 		ProcessBasePortalVis,	// Worker function to process work units
 		ReceiveBasePortalVis	// Master function to receive work results
 		);
@@ -601,6 +602,7 @@ void RunMPIPortalFlow()
 	g_CPUTime.Init();
 	double elapsed = DistributeWork( 
 		g_numportals * 2,		// # work units
+		VMPI_DISTRIBUTEWORK_PACKETID, 
 		ProcessPortalFlow,		// Worker function to process work units
 		ReceivePortalFlow		// Master function to receive work results
 		);
