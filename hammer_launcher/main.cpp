@@ -30,6 +30,7 @@
 IHammer *g_pHammer;
 IFileSystem *g_pFileSystem;
 
+#ifndef NO_STEAM
 extern "C" void WriteMiniDumpUsingExceptionInfo
 ( 
  unsigned int			uStructuredExceptionCode, 
@@ -39,6 +40,7 @@ struct _EXCEPTION_POINTERS * pExceptionInfo
 	// TODO: dynamically set the minidump comment from contextual info about the crash (i.e current VPROF node)?
 	SteamWriteMiniDumpUsingExceptionInfoWithBuildId( uStructuredExceptionCode, pExceptionInfo, 0 );
 }
+#endif
 
 
 //-----------------------------------------------------------------------------
