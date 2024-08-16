@@ -472,192 +472,200 @@ ALLOC_CALL void *calloc( size_t nCount, size_t nElementSize )
 extern "C"
 {
 
-// 64-bit
+
+	// 64-bit
 #ifdef _WIN64
-void* __cdecl _malloc_base( size_t nSize )
-{
-	return AllocUnattributed( nSize );
-}
+	_CRTALLOCATOR _CRTRESTRICT
+	void* __cdecl _malloc_base( size_t nSize )
+	{
+		return AllocUnattributed( nSize );
+	}
 #else
-void *_malloc_base( size_t nSize )
-{
-	return AllocUnattributed( nSize );
-}
+	_CRTALLOCATOR _CRTRESTRICT
+	void *_malloc_base( size_t nSize )
+	{
+		return AllocUnattributed( nSize );
+	}
 #endif
 
 #if ( defined ( _MSC_VER ) && _MSC_VER >= 1900 )
-_CRTRESTRICT void *_calloc_base(size_t nCount, size_t nSize)
-{
-	void *pMem = AllocUnattributed(nCount*nSize);
-	memset(pMem, 0, nCount*nSize);
-	return pMem;
-}
+	_CRTALLOCATOR _CRTRESTRICT
+	void *_calloc_base(size_t nCount, size_t nSize)
+	{
+		void *pMem = AllocUnattributed(nCount*nSize);
+		memset(pMem, 0, nCount*nSize);
+		return pMem;
+	}
 #else
-void *_calloc_base( size_t nSize )
-{
-	void *pMem = AllocUnattributed( nSize );
-	memset(pMem, 0, nSize);
-	return pMem;
-}
+	_CRTALLOCATOR _CRTRESTRICT
+	void *_calloc_base( size_t nSize )
+	{
+		void *pMem = AllocUnattributed( nSize );
+		memset(pMem, 0, nSize);
+		return pMem;
+	}
 #endif
 
-void *_realloc_base( void *pMem, size_t nSize )
-{
-	return ReallocUnattributed( pMem, nSize );
-}
+	_CRTALLOCATOR _CRTRESTRICT
+	void *_realloc_base( void *pMem, size_t nSize )
+	{
+		return ReallocUnattributed( pMem, nSize );
+	}
 
 #if 1
-void* _recalloc_base( void *pMem, size_t nCount, size_t nSize )
-{
-	auto size = nCount * nSize;
-#else
-void* _recalloc_base(void* pMem, size_t nSize)
-{
-	auto size = nSize;
-#endif
-	void *pMemOut = ReallocUnattributed( pMem, size);
-	if (!pMem)
+	_CRTALLOCATOR _CRTRESTRICT
+	void* _recalloc_base( void *pMem, size_t nCount, size_t nSize )
 	{
-		memset(pMemOut, 0, size);
+		auto size = nCount * nSize;
+#else
+	_CRTALLOCATOR _CRTRESTRICT
+	void* _recalloc_base(void* pMem, size_t nSize)
+	{
+		auto size = nSize;
+#endif
+		void *pMemOut = ReallocUnattributed( pMem, size);
+		if (!pMem)
+		{
+			memset(pMemOut, 0, size);
+		}
+		return pMemOut;
 	}
-	return pMemOut;
-}
 
-void _free_base( void *pMem )
-{
+	void _free_base( void *pMem )
+	{
 #if !defined(USE_LIGHT_MEM_DEBUG) && !defined(USE_MEM_DEBUG)
-	g_pMemAlloc->Free(pMem);
+		g_pMemAlloc->Free(pMem);
 #else
-	g_pMemAlloc->Free(pMem, ::g_pszModule, 0 );
+		g_pMemAlloc->Free(pMem, ::g_pszModule, 0 );
 #endif
-}
-
-void *__cdecl _expand_base( void *pMem, size_t nNewSize, int nBlockUse )
-{
-	Assert( 0 );
-	return nullptr;
-}
-
-// crt
-void * __cdecl _malloc_crt(size_t size)
-{
-	return AllocUnattributed( size );
-}
-
-void * __cdecl _calloc_crt(size_t count, size_t size)
-{
-#if (defined( _MSC_VER ) && _MSC_VER >= 1900)
-	return _calloc_base(count, size);
-#else
-	return _calloc_base( count * size );
-#endif
-}
-
-void * __cdecl _realloc_crt(void *ptr, size_t size)
-{
-	return _realloc_base( ptr, size );
-}
-
-void * __cdecl _recalloc_crt(void *ptr, size_t count, size_t size)
-{
-	return _recalloc_base( ptr,
-#if 1
-		count, size
-#else
-		size * count
-#endif
-	);
-}
-
-ALLOC_CALL void * __cdecl _recalloc ( void * memblock, size_t count, size_t size )
-{
-	void *pMem = ReallocUnattributed( memblock, size * count );
-	if (!memblock)
-	{
-		memset(pMem, 0, size * count);
 	}
-	return pMem;
-}
 
-size_t _msize_base( void *pMem ) //noexcept
-{
-	return g_pMemAlloc->GetSize(pMem);
-}
+	void *__cdecl _expand_base( void *pMem, size_t nNewSize, int nBlockUse )
+	{
+		Assert( 0 );
+		return nullptr;
+	}
 
-size_t _msize( void *pMem )
-{
-	return _msize_base(pMem);
-}
+	// crt
+	void * __cdecl _malloc_crt(size_t size)
+	{
+		return AllocUnattributed( size );
+	}
 
-size_t msize( void *pMem )
-{
-	return g_pMemAlloc->GetSize(pMem);
-}
+	void * __cdecl _calloc_crt(size_t count, size_t size)
+	{
+#if (defined( _MSC_VER ) && _MSC_VER >= 1900)
+		return _calloc_base(count, size);
+#else
+		return _calloc_base( count * size );
+#endif
+	}
 
-void *__cdecl _heap_alloc( size_t nSize )
-{
-	return AllocUnattributed( nSize );
-}
+	void * __cdecl _realloc_crt(void *ptr, size_t size)
+	{
+		return _realloc_base( ptr, size );
+	}
 
-void *__cdecl _nh_malloc( size_t nSize, int )
-{
-	return AllocUnattributed( nSize );
-}
+	void * __cdecl _recalloc_crt(void *ptr, size_t count, size_t size)
+	{
+		return _recalloc_base( ptr,
+#if 1
+			count, size
+#else
+			size * count
+#endif
+		);
+	}
 
-void *__cdecl _expand( void *pMem, size_t nSize )
-{
-	Assert( 0 );
-	return nullptr;
-}
+	ALLOC_CALL void * __cdecl _recalloc ( void * memblock, size_t count, size_t size )
+	{
+		void *pMem = ReallocUnattributed( memblock, size * count );
+		if (!memblock)
+		{
+			memset(pMem, 0, size * count);
+		}
+		return pMem;
+	}
 
-unsigned int _amblksiz = 16; //BYTES_PER_PARA;
+	size_t _msize_base( void *pMem ) //noexcept
+	{
+		return g_pMemAlloc->GetSize(pMem);
+	}
+
+	size_t _msize( void *pMem )
+	{
+		return _msize_base(pMem);
+	}
+
+	size_t msize( void *pMem )
+	{
+		return g_pMemAlloc->GetSize(pMem);
+	}
+
+	void *__cdecl _heap_alloc( size_t nSize )
+	{
+		return AllocUnattributed( nSize );
+	}
+
+	void *__cdecl _nh_malloc( size_t nSize, int )
+	{
+		return AllocUnattributed( nSize );
+	}
+
+	void *__cdecl _expand( void *pMem, size_t nSize )
+	{
+		Assert( 0 );
+		return nullptr;
+	}
+
+	unsigned int _amblksiz = 16; //BYTES_PER_PARA;
 
 #if _MSC_VER >= 1400
-HANDLE _crtheap = (HANDLE)1;	// PatM Can't be 0 or CRT pukes
-int __active_heap = 1;
+	HANDLE _crtheap = (HANDLE)1;	// PatM Can't be 0 or CRT pukes
+	int __active_heap = 1;
 #endif //  _MSC_VER >= 1400
 
-size_t __cdecl _get_sbh_threshold( void )
-{
-	return 0;
-}
+	size_t __cdecl _get_sbh_threshold( void )
+	{
+		return 0;
+	}
 
-int __cdecl _set_sbh_threshold( size_t )
-{
-	return 0;
-}
+	int __cdecl _set_sbh_threshold( size_t )
+	{
+		return 0;
+	}
 
-int _heapchk()
-{
-	return g_pMemAlloc->heapchk();
-}
+	int _heapchk()
+	{
+		return g_pMemAlloc->heapchk();
+	}
 
-int _heapmin()
-{
-	return 1;
-}
+	int _heapmin()
+	{
+		return 1;
+	}
 
-int __cdecl _heapadd( void *, size_t )
-{
-	return 0;
-}
+	int __cdecl _heapadd( void *, size_t )
+	{
+		return 0;
+	}
 
-int __cdecl _heapset( unsigned int )
-{
-	return 0;
-}
+	int __cdecl _heapset( unsigned int )
+	{
+		return 0;
+	}
 
-size_t __cdecl _heapused( size_t *, size_t * )
-{
-	return 0;
-}
+	size_t __cdecl _heapused( size_t *, size_t * )
+	{
+		return 0;
+	}
 
 #ifdef _WIN32
 #include <malloc.h>
-int __cdecl _heapwalk( _HEAPINFO * )
-{
-	return 0;
-}
+	int __cdecl _heapwalk( _HEAPINFO * )
+	{
+		return 0;
+	}
 #endif
 
 } // end extern "C"
