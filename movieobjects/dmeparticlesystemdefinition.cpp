@@ -233,10 +233,8 @@ CDmeEditorTypeDictionary* CDmeParticleFunction::GetEditorTypeDictionary()
 
 void CDmeParticleFunction::InstanceTypeDictionary()
 {
-	if ( m_hTypeDictionary != DMELEMENT_HANDLE_INVALID )
-	{
+	if ( m_hTypeDictionary )
 		m_hTypeDictionary = m_hTypeDictionary->Copy();
-	}
 }
 
 //-----------------------------------------------------------------------------
