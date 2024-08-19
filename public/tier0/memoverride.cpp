@@ -419,6 +419,25 @@ inline void *ReallocUnattributed( void *pMem, size_t nSize )
 //-----------------------------------------------------------------------------
 #if defined(_WIN32) && !defined(_STATIC_LINKED)
 
+// For anyone wondering how all this stuff even works (on Windows/MSVC).
+// As I (stpM64) understand, linker allows silently overriding 
+// functions from statically linked libs with your own ones.
+// Here we override, for example, functions `malloc`, `_CrtDumpMemoryLeaks` and `__p_crtDbgFlag` (search for `_crtDbgFlag`), among others.
+//
+// If you link another static lib that uses those functions, overridden ones are generally picked.
+// Original functions are not even loaded by the linker, it seems. No ODR violation occurs.
+//
+// Sometimes this breaks. It looks like if you use several functions 
+// that are defined in the same translation unit (.cpp-file and its #includes),
+// all of the used functions are loaded by linker, even if some of them are overridden here.
+// Thus ODR violation ensures.
+//
+// MFC, for example, uses `_CrtDumpMemoryLeaks` and `__p_crtDbgFlag` in the same .cpp-file (atlmfc/src/mfc/dumpinit.cpp).
+// So, if for some reason Valve disabled override of `__p_crtDbgFlag`,
+// both `_CrtDumpMemoryLeaks` from memoverride.cpp and from CRT would be loaded, among few dozens of other functions.
+//
+// Valve did exactly that for VS2015 and above. Question of "Why?" remains unanswered.
+
 // this magic only works under win32
 // under linux this malloc() overrides the libc malloc() and so we
 // end up in a recursion (as MemAlloc_Alloc() calls malloc)
@@ -1016,10 +1035,18 @@ int _CrtSetDbgFlag( int nNewFlag )
 // 64-bit port.
 #define AFNAME(var) __p_ ## var
 #define AFRET(var)  &var
+#if defined(_crtDbgFlag)
+#undef _crtDbgFlag
+#endif
+#if defined(_crtBreakAlloc)
+#undef _crtBreakAlloc
+#endif
 
-#if ( defined( _MSC_VER ) && _MSC_VER >= 1900)
-//Do we need to do anything here for VS2015?
-#else
+// NOTE: commenting out this thing fixes MFC linking.
+// Why did Valve broke this, I have no idea.
+//#if ( defined( _MSC_VER ) && _MSC_VER >= 1900)
+////Do we need to do anything here for VS2015?
+//#else
 int _crtDbgFlag = _CRTDBG_ALLOC_MEM_DF;
 int* AFNAME(_crtDbgFlag)(void)
 {
@@ -1031,7 +1058,7 @@ long* AFNAME(_crtBreakAlloc) (void)
 {
 	return AFRET(_crtBreakAlloc);
 }
-#endif
+//#endif
 
 void __cdecl _CrtSetDbgBlockType( void *pMem, int nBlockUse )
 {
